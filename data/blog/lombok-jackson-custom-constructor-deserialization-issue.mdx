@@ -1,0 +1,110 @@
+---
+title: 'Lombok 與 Jackson 反序列化踩雷筆記：自訂建構子後 Jackson 報錯的解法'
+date: '2025-08-20'
+tags: ['lombok', 'jackson', 'java', 'deserialization']
+draft: false
+summary: 'Lombok 與 Jackson 搭配時的常見坑：自訂建構子導致 Jackson 反序列化報錯及解法整理。'
+---
+在專案中常常會同時使用 **Lombok** 與 **Jackson**。  
+Lombok 用來減少樣板程式碼，例如 getter/setter、建構子、Builder…，  Jackson 則負責 JSON 的反序列化。
+
+> 在使用 Lombok 與 Jackson 搭配 DTO 時，自訂建構子可能會導致反序列化失敗，本文整理原因與解法。
+
+---
+
+## 問題場景
+
+假設我們有個簡單的 DTO：
+
+```java
+@Data
+public class MyDto {
+    private String id;
+    private String name;
+
+    public MyDto(String id) {
+        this.id = id;
+    }
+}
+```
+
+這時如果用 Jackson 反序列化：
+
+```java
+ObjectMapper mapper = new ObjectMapper();
+MyDto dto = mapper.readValue("{\"id\":\"123\",\"name\":\"Vic\"}", MyDto.class);
+```
+
+會報錯：
+
+```
+cannot deserialize from Object value (no delegate- or property-based Creator)
+```
+
+---
+
+## 為什麼會這樣？
+
+原因是：
+
+- `@Data` 並不會幫你生成建構子。
+- 雖然 `@Data` 涵蓋了 `RequiredArgsConstructor` ，其參數為 class 中所有標註 `@NonNull` , `final` 的 fields，但是當你自己定義了一個有參數建構子，Java 編譯器就不會再自動生成 **無參建構子**。
+- 而 Jackson 預設需要一個 **無參建構子**，才能先 new 出物件再透過 setter/field 注入值。
+- 如果沒有無參建構子，Jackson 就會找不到方式建立物件，導致反序列化失敗。
+
+---
+
+## 解決辦法
+
+有幾種常見做法可以解決這個問題，依需求選擇：
+
+### ✅ 解法 1：補上 `@NoArgsConstructor`
+
+最直觀的方式就是加上無參建構子：
+
+```java
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class MyDto {
+    private String id;
+    private String name;
+}
+
+```
+
+這樣 Jackson 就能用無參建構子 + setter 的方式反序列化。
+
+---
+
+### ✅ 解法 2：使用 `@JsonCreator`
+
+如果你只想透過 **全參數建構子**來反序列化，可以這樣：
+
+```java
+@Data
+@AllArgsConstructor
+public class MyDto {
+    private String id;
+    private String name;
+
+    @JsonCreator
+    public MyDto(@JsonProperty("id") String id,
+                 @JsonProperty("name") String name) {
+        this.id = id;
+        this.name = name;
+    }
+}
+
+```
+
+這樣 Jackson 就會依照欄位名稱，呼叫指定的建構子來建立物件。
+
+---
+
+## 結論與建議
+
+使用 Lombok `@Data` 時，如果手動定義了建構子，Java 不會自動生成無參建構子。
+Jackson 預設需要無參建構子，所以最簡單的做法是加上 @NoArgsConstructor。
+如果希望 DTO 是 Immutable，或需要透過全參數建構子反序列化，則可以使用 @JsonCreator 搭配 @JsonProperty。
+實務建議：多數 DTO 優先使用 @NoArgsConstructor + @Data，僅在特定需求下使用 @JsonCreator。
