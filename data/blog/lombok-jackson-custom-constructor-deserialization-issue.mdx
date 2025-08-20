@@ -105,6 +105,6 @@ public class MyDto {
 ## 結論與建議
 
 使用 Lombok `@Data` 時，如果手動定義了建構子，Java 不會自動生成無參建構子。
-Jackson 預設需要無參建構子，所以最簡單的做法是加上 @NoArgsConstructor。
-如果希望 DTO 是 Immutable，或需要透過全參數建構子反序列化，則可以使用 @JsonCreator 搭配 @JsonProperty。
-實務建議：多數 DTO 優先使用 @NoArgsConstructor + @Data，僅在特定需求下使用 @JsonCreator。
+Jackson 預設需要無參建構子，所以最簡單的做法是加上 `@NoArgsConstructor`。
+如果希望 DTO 是 Immutable，或需要透過全參數建構子反序列化，則可以使用 `@JsonCreator` 搭配 `@JsonProperty`。
+實務建議：多數 DTO 優先使用 `@NoArgsConstructor` + `@Data`，僅在特定需求下使用 `@JsonCreator`。
