@@ -1,0 +1,79 @@
+---
+title: '[Go 學習系列] 2. Hello Go!'
+date: '2025-08-22'
+summary: ''
+tags: ['Go', 'Go 學習系列']
+---
+
+# 下載和安裝方式
+
+下載方式可以參考官方 [Go Download and install](https://go.dev/doc/install)
+因為我是使用 Mac OS 開發，所以就採用最簡單的 **Homebrew** 去進行下載
+
+## Mac（Homebrew）範例
+
+```bash
+brew install go
+```
+
+---
+
+## 驗證安裝
+
+打開 terminal 執行確認
+
+```bash
+go version
+```
+
+- 看到 Go 版本，代表安裝成功
+
+```
+go version go1.25.0 darwin/arm64
+```
+
+## 設定環境（Optional）
+
+確認 GOPATH 與 GOROOT（新版 Go module 一般不用特別設定）
+PATH 已包含 Go binary (/usr/local/go/bin)
+
+```bash
+echo $GOPATH
+echo $GOROOT
+```
+
+> Go 1.11 以後，Go 推行 Go Modules，大部分新專案已經不需要自己設定 `GOPATH` 或 `GOROOT`，而且這些環境變數可能根本沒有設定，所以 echo 會顯示空白是正常的。
+
+1. GOROOT
+
+- 指向 Go 語言安裝目錄（官方安裝包已經自動設定好，通常不需要手動改）
+- 只有當你手動安裝 Go 或自訂安裝路徑才會用到
+
+2. GOPATH
+
+- 以前用來管理工作區、第三方套件
+- 現在使用 Go Modules (go mod) 就不需要手動設定了
+- Go 會自動在 $HOME/go 當作預設工作目錄（Linux/Mac）
+
+```bash
+go env GOPATH   # 查看實際 GOPATH
+go env GOROOT   # 查看實際 GOROOT
+```
+
+---
+
+# 開發工具選擇
+
+## VSCode + Go Extension （輕量首選）
+
+- 安裝 Go extension:
+- 自動補全（autocomplete）
+- 語法檢查、Lint（gofmt / golint）
+- Debug 支援
+
+## GoLand (JetBrains 系列 IDE)
+
+- 功能完整，支援 refactor、導航、code inspection...等
+- 內建測試與 benchmark 執行支援
+- 對大型專案、微服務專案管理更方便
+- 對 Go Modules 和複雜專案依賴處理更穩定
