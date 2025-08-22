@@ -1,7 +1,7 @@
 ---
 title: '[Go 學習系列] 2. Hello Go!'
 date: '2025-08-22'
-summary: ''
+summary: '學習如何安裝 Go、使用 VSCode 或 GoLand，並撰寫第一個 Hello World 程式'
 tags: ['Go', 'Go 學習系列']
 ---
 
@@ -26,7 +26,7 @@ brew install go
 go version
 ```
 
-- 看到 Go 版本，代表安裝成功
+- 看到 Go 版本，代表安裝成功，例如：
 
 ```
 go version go1.25.0 darwin/arm64
@@ -44,12 +44,12 @@ echo $GOROOT
 
 > Go 1.11 以後，Go 推行 Go Modules，大部分新專案已經不需要自己設定 `GOPATH` 或 `GOROOT`，而且這些環境變數可能根本沒有設定，所以 echo 會顯示空白是正常的。
 
-1. GOROOT
+### GOROOT
 
 - 指向 Go 語言安裝目錄（官方安裝包已經自動設定好，通常不需要手動改）
 - 只有當你手動安裝 Go 或自訂安裝路徑才會用到
 
-2. GOPATH
+### GOPATH
 
 - 以前用來管理工作區、第三方套件
 - 現在使用 Go Modules (go mod) 就不需要手動設定了
@@ -71,9 +71,68 @@ go env GOROOT   # 查看實際 GOROOT
 - 語法檢查、Lint（gofmt / golint）
 - Debug 支援
 
+> 初學者推薦先用 VSCode，輕量又簡單。
+
 ## GoLand (JetBrains 系列 IDE)
 
 - 功能完整，支援 refactor、導航、code inspection...等
 - 內建測試與 benchmark 執行支援
 - 對大型專案、微服務專案管理更方便
 - 對 Go Modules 和複雜專案依賴處理更穩定
+
+---
+
+# Hello Go
+
+接下來，我們建立一個簡單的 Hello World 專案，完全在本地練習。
+
+## 建立專案資料夾
+
+```bash
+mkdir hello-go
+cd hello-go
+```
+
+## 寫第一個程式
+
+在專案資料夾內建立 `main.go`：
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello Go!")
+}
+```
+
+## 執行程式：
+
+```bash
+go run main.go
+```
+
+輸出：
+
+```
+Hello Go!
+```
+
+## 建立可執行檔
+
+想要生成可執行檔：
+
+```bash
+go build -o hello
+./hello
+```
+
+> -o hello 可以指定輸出檔名，會在當前目錄生成可執行檔
+
+---
+
+# 結語
+
+到這裡，你已經成功踏入 Go 的世界了！
+接下來我們來了解 Go 的一些基本架構吧
