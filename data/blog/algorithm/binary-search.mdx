@@ -1,0 +1,194 @@
+---
+title: '[演算法筆記] Binary Search 二分搜尋法'
+date: '2025-08-26'
+summary: '整理 Binary Search 的核心概念、常見模板、應用場景，幫助快速複習。'
+tags: ['Algorithm']
+---
+
+# 前言
+
+在演算法面試中，**Binary Search（二分搜尋法）** 是最基礎、也是最實用的技巧之一。  
+無論是 **單純搜尋(Search Target in Array)**、**找邊界值(Boundary / Limit Problems)** 還是 **Binary Search on Answer**，掌握這個模式能夠幫助你解決很多經典問題。  
+這篇文章會整理常用模板、應用場景，方便快速複習。
+
+---
+
+# 核心概念
+
+Binary Search 是一種 **O(log n)** 的搜尋演算法，其核心思想在於**每次將搜尋範圍減半**，直到找到目標值或範圍縮小到無法搜尋，常用於：
+
+- 資料具備 **單調性 (Monotonicity)**
+- 能夠根據條件分割搜尋範圍
+- 可以把問題轉換成 **找邊界** 或 **找答案**
+
+大多數的二分問題，基本上可以被視為等下於下列**三種問題**
+
+1. 尋找第一個滿足條件的目標
+2. 尋找最後一個滿足條件的目標
+3. 尋找到滿足目標就好，位置不重要
+
+---
+
+# 問題分類示例
+
+以這個例子為例
+
+```python
+  value: [1, 1, 1, 2, 2, 2, 3, 3, 3]
+# index: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+```
+
+大至上可以分為
+
+尋找第一個出現的2 = 尋找滿足 `x >= 2` 的第一個數
+
+```python
+  value: [1, 1, 1, 2, 2, 2, 3, 3, 3]
+#        [X, X, X, O, O, O, O, O, O]
+#                  ↑
+```
+
+尋找找最後一個出現的2 = 尋找滿足 `x <= 2` 的最後一個數
+
+```python
+  value: [1, 1, 1, 2, 2, 2, 3, 3, 3]
+#        [O, O, O, O, O, O, X, X, X]
+#                        ↑
+```
+
+尋找 > 2 的第一個數
+
+```python
+  value: [1, 1, 1, 2, 2, 2, 3, 3, 3]
+#        [X, X, X, X, X, X, O, O, O]
+#                           ↑
+```
+
+尋找 < 2 的最後一個數
+
+```python
+  value: [1, 1, 1, 2, 2, 2, 3, 3, 3]
+#        [O, O, O, X, X, X, X, X, X]
+#               ↑
+```
+
+---
+
+# 常見二分法模板
+
+二分法寫法主要有三種，差別在於 while 迴圈條件 和 候選區間。
+
+```python
+while left <= right        # 閉區間模板
+while left < right         # 左閉右開模板
+while left + 1 < right     # 剩兩個候選值模板
+```
+
+## 1. 閉區間模板 [left, right]
+
+**適合情境：**
+
+- 單純查找目標是否存在
+- 部分旋轉陣列查找題
+
+```python
+def binary_search(arr, target):
+    left, right = 0, len(arr) - 1
+    while left <= right:
+        mid = (left + right) // 2
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            left = mid + 1
+        else:
+            right = mid - 1
+    return -1
+```
+
+**特點：**
+
+- 候選區間 [left, right] 都包含
+- 迴圈結束後候選值消失 (left > right)
+
+## 2. 左閉右開模板 [left, right)
+
+**適合情境：**
+
+- 找第一個滿足條件的位置 (lower bound)
+- 找最後一個滿足條件的位置 (upper bound)
+- Binary Search on Answer 類題目
+
+```python
+def binary_search(arr, target):
+    left, right = 0, len(arr)
+    while left < right:
+    mid = (left + right) // 2
+    if arr[mid] < target:
+        left = mid + 1
+    else:
+        right = mid
+    return left
+```
+
+**特點：**
+
+- 左端點包含，右端點不包含
+- 迴圈結束後候選值剩 1 個 (`left == right`)
+- 常用於找 邊界值
+
+### 常見題型
+
+| 題型             | 條件判斷           | 回傳位置   | 範例結果            |
+| ---------------- | ------------------ | ---------- | ------------------- |
+| 第一個出現的 2   | `>= target` → 縮右 | `left`     | `[1,2,2,2,3] → 1`   |
+| 最後一個出現的 2 | `<= target` → 縮左 | `left - 1` | `[1,2,2,2,3] → 3`   |
+| 第一個比 2 大    | `<= target` → 縮左 | `left`     | `[1,2,2,2,3,4] → 4` |
+| 最後一個比 2 小  | `< target` → 縮左  | `left - 1` | `[1,2,2,2,3] → 0`   |
+
+## 3. 剩兩個候選值模板 [left, right]
+
+**適合場景：**
+
+- 找邊界值題 (lower/upper bound)
+- 極值題（最大/最小值）
+- Binary Search on Answer 類型題
+- 面試中常用模板，迴圈結束後手動檢查剩餘兩個候選值
+
+```python
+def binary_search(arr, target):
+    left, right = 0, len(arr)
+    while left + 1 < right:
+    mid = (left + right) // 2
+    if arr[mid] < target:
+        left = mid
+    else:
+        right = mid
+    ## 最後會有兩個候選值要判斷
+    if arr[left] == target:
+        return left
+    if arr[right] == target:
+        return right
+    return -1
+```
+
+**特點：**
+
+- 迴圈結束後剩兩個候選值，方便手動判斷
+- 適用於 邊界題、極值題
+
+## 模板選擇總結
+
+- 單純搜尋 -> **閉區間模板 [left, right]**
+- 找邊界 -> 是否需要精準邊界？
+  - 是 -> **剩兩個候選值模板**
+  - 否 -> **左閉右開模板 [left, right)**
+- 找極值 / Binary Search on Answer -> **剩兩個候選值模板**
+
+> [!Note]
+> 三個模板很多情境可以互換，指示某些特定情況下，選用某個模板會更加自然或者安全
+
+---
+
+# 參考資料
+
+[二分法的邊界條件 | Opass](https://www.opasschang.com/blog/boundary-cases-of-binary-search)
