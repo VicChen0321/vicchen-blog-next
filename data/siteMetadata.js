@@ -2,7 +2,7 @@
 const siteMetadata = {
   title: 'Blog | Vic Chen 軟體工程師成長部落格',
   author: 'Vic Chen',
-  headerTitle: "VicChen | Blog",
+  headerTitle: 'VicChen | Blog',
   description: 'Vic Chen 官方部落格 | 分享程式教學、學習筆記...等內容',
   language: 'en-us',
   theme: 'system', // system, dark or light
@@ -52,7 +52,8 @@ const siteMetadata = {
   newsletter: {
     // supports mailchimp, buttondown, convertkit, klaviyo, revue, emailoctopus, beehive
     // Please add your .env file and modify it according to your selection
-    provider: 'buttondown',
+    // provider: 'buttondown',
+    provider: '',
   },
   comments: {
     // If you want to use an analytics provider you have to add it to the
