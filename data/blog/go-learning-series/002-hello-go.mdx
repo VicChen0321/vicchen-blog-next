@@ -42,6 +42,7 @@ echo $GOPATH
 echo $GOROOT
 ```
 
+> [!NOTE]
 > Go 1.11 以後，Go 推行 Go Modules，大部分新專案已經不需要自己設定 `GOPATH` 或 `GOROOT`，而且這些環境變數可能根本沒有設定，所以 echo 會顯示空白是正常的。
 
 ### GOROOT
@@ -71,6 +72,7 @@ go env GOROOT   # 查看實際 GOROOT
 - 語法檢查、Lint（gofmt / golint）
 - Debug 支援
 
+> [!TIP]
 > 初學者推薦先用 VSCode，輕量又簡單。
 
 ## GoLand (JetBrains 系列 IDE)
@@ -97,7 +99,7 @@ cd hello-go
 
 在專案資料夾內建立 `main.go`：
 
-```go
+```go:main.go
 package main
 
 import "fmt"
@@ -128,6 +130,7 @@ go build -o hello
 ./hello
 ```
 
+> [!NOTE]
 > -o hello 可以指定輸出檔名，會在當前目錄生成可執行檔
 
 ---

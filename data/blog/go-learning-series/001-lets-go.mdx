@@ -1,8 +1,8 @@
 ---
 title: "[Go 學習系列] 1. Let's Go! 認識 Go"
-date: "2025-08-21"
-summary: "作為 Java 後端工程師，開始學習 Go 並整理筆記，分享為什麼選擇 Go 以及 Go 是什麼。"
-tags: ["Go", "Go 學習系列"]
+date: '2025-08-21'
+summary: '作為 Java 後端工程師，開始學習 Go 並整理筆記，分享為什麼選擇 Go 以及 Go 是什麼。'
+tags: ['Go', 'Go 學習系列']
 ---
 
 ![go-banner](/static/images/go/go-banner-1.webp)
@@ -20,21 +20,21 @@ tags: ["Go", "Go 學習系列"]
 Go (又叫 Golang) 由 Google 在 **2007 年** 開發，並於 **2009 年** 正式開源發佈，是一門開源程式語言
 Go 的設計目標是為了 **簡潔、高效、易於維護**，特別適合用於伺服器端（Server-side）、雲服務（Cloud Service）以及分散式系統（Distributed Systems）開發。
 
-> "Less can be more." -- 大道至簡，小而蘊真。把事情變得複雜很容易，把事情變得簡單才困難。
+> Less can be more. -- 大道至簡，小而蘊真。把事情變得複雜很容易，把事情變得簡單才困難。
 
 Go 的主要特色
 
-- **語法簡單**  
-  - Go 的語法規則嚴謹，幾乎沒有「黑魔法」用法。  
+- **語法簡單**
+  - Go 的語法規則嚴謹，幾乎沒有「黑魔法」用法。
   - 例如：把 `++`、`--` 從運算子降級為語句、保留指針但禁止指針運算，內建切片（Slice）與字典（Map），並從 Runtime 層面優化。
 
-- **並發模型**  
-  - **Goroutine** + **Channel**，讓多執行緒開發變得更直觀。  
-  - Goroutine 可以看成是「輕量級的協程 (Coroutine)」，由 Runtime 層面幫忙做更高效的調度。你不用自己處理 Callback，也不用煩惱線程切換。  
+- **並發模型**
+  - **Goroutine** + **Channel**，讓多執行緒開發變得更直觀。
+  - Goroutine 可以看成是「輕量級的協程 (Coroutine)」，由 Runtime 層面幫忙做更高效的調度。你不用自己處理 Callback，也不用煩惱線程切換。
   - Channel 則實現了 CSP（Communitcating Sequential Processes）模型，讓並發單元之間的資料傳遞更自然，不再糾結於記憶體共享與鎖的細節。
 
 - **靜態型別**  
-  編譯時就能檢查型別，降低出錯率。  
+  編譯時就能檢查型別，降低出錯率。
 
 - **垃圾回收 (GC)**  
   不需要手動管理記憶體，開發更省心。
@@ -43,9 +43,9 @@ Go 的主要特色
 
 # Why Go?
 
-- **設計哲學**：簡單、務實。  
-- **高效性能**：接近 C 的執行效能，開發體驗卻更像直譯語言一樣輕快；編譯速度也極快。  
-- **並發支援**：Goroutine 讓並發程式設計 (Concurrency Programming) 變得親民好上手。  
+- **設計哲學**：簡單、務實。
+- **高效性能**：接近 C 的執行效能，開發體驗卻更像直譯語言一樣輕快；編譯速度也極快。
+- **並發支援**：Goroutine 讓並發程式設計 (Concurrency Programming) 變得親民好上手。
 
 ---
 
