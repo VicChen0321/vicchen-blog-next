@@ -1,12 +1,13 @@
 ---
 title: 'Lombok 與 Jackson 反序列化踩雷筆記：自訂建構子後 Jackson 報錯的解法'
 date: '2025-08-20'
-tags: ['lombok', 'jackson', 'java', 'deserialization']
+tags: ['Lombok', 'Jackson', 'Java', 'Deserialization']
 draft: false
 summary: 'Lombok 與 Jackson 搭配時的常見坑：自訂建構子導致 Jackson 反序列化報錯及解法整理。'
 ---
+
 在專案中常常會同時使用 **Lombok** 與 **Jackson**。  
-Lombok 用來減少樣板程式碼，例如 getter/setter、建構子、Builder…，  Jackson 則負責 JSON 的反序列化。
+Lombok 用來減少樣板程式碼，例如 getter/setter、建構子、Builder…， Jackson 則負責 JSON 的反序列化。
 
 > 在使用 Lombok 與 Jackson 搭配 DTO 時，自訂建構子可能會導致反序列化失敗，本文整理原因與解法。
 
