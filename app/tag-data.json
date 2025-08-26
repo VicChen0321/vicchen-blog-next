@@ -1,8 +1,9 @@
 {
-  "go": 2,
-  "go-學習系列": 2,
   "lombok": 1,
   "jackson": 1,
   "java": 1,
-  "deserialization": 1
+  "deserialization": 1,
+  "algorithm": 1,
+  "go": 2,
+  "go-學習系列": 2
 }
