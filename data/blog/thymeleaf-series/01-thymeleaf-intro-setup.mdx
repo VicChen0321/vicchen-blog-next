@@ -1,0 +1,98 @@
+---
+title: '[Thymeleaf 教學筆記] 入門與環境設定'
+date: '2025-08-28'
+draft: true
+summary: '介紹如何在 Spring Boot 專案中整合 Thymeleaf，並建立第一個簡單模板。'
+tags: ['Thymeleaf', 'Spring Boot', 'Email', 'Template']
+---
+
+# 前言
+
+在開發企業應用或後台管理系統時，**通知 (Notification) 模組** 是不可或缺的部分。  
+目前我們專案的 Email 功能沒有使用任何模板引擎，也沒有獨立 Module，信件內容都是用 `StringBuilder` 在程式碼中拼接而成。這種寫法導致後續維護困難，缺乏擴展性，每次修改內容或樣式都需要更動 Java 代碼。
+
+為了改善，我提出將 Email 模板抽離，建立一個獨立 Notification 模組，並使用 **Thymeleaf** 作為模板引擎。Thymeleaf 是 Spring Boot 官方推薦的模板引擎，能與 Spring Boot 無縫整合，語法直觀，方便將 HTML 與動態變數結合，使 Email 模板更易維護與擴展。
+
+這系列文章將從環境設定開始，逐步介紹 Thymeleaf 語法與 Email 模板實作，目標是建立一套完整的 Thymeleaf 教學筆記，方便未來回顧與使用。
+
+---
+
+# What is Thymeleaf？
+
+Thymeleaf 是一個 Java 模板引擎，用來生成 HTML、XML、TXT，甚至 JavaScript。  
+它的特色是 **原生支援 HTML5**，模板本身可以直接在瀏覽器打開，方便設計 Email 或網頁模板。  
+相比 JSP、FreeMarker、Velocity，Thymeleaf 語法直觀，結構清楚，易於維護。
+
+# Hello Thymeleaf 建立第一個模板
+
+## 1. 引入依賴
+
+在 Spring Boot 專案中加入 Thymeleaf Starter：
+
+### Maven
+```xml:pom.xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-thymeleaf</artifactId>
+</dependency>
+```
+### Gradle (Kotlin DSL)
+```kotlin:build.gradle.kts
+// Thymeleaf
+implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+```
+
+## 2. 模板位置與命名規則
+
+- hymeleaf 預設會在 `src/main/resources/templates/` 目錄尋找模板。
+- 模板檔案通常以 `.html` 作為副檔名。
+- 可以使用子目錄組織模板，例如 `templates/email/welcome.html`。
+
+## 3. 建立第一個模板
+在 `src/main/resources/templates/hello.html` 建立簡單範例：
+
+```html:hello.html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <title>Hello Thymeleaf</title>
+  </head>
+  <body>
+    <h1 th:text="'Hello, ' + ${name} + '!'">Hello, World!</h1>
+  </body>
+</html>
+```
+
+> [!NOTE]
+> `th:text` 用來將 Model 中的變數 `${name}` 綁定到 HTML。
+> 如果不使用 `th:text`，標籤內文字會作為預設顯示。
+> 單引號內的字串可與 `${name}` 連接。
+
+## 4. Controller 測試
+
+在 Spring Boot 中建立一個簡單 Controller：
+
+```java:HelloController.java
+@Controller
+public class HelloController {
+
+    @GetMapping("/hello")
+    public String hello(Model model) {
+        model.addAttribute("name", "Vic");
+        return "hello"; // 對應 templates/hello.html
+    }
+}
+```
+> [!TIP]
+> 使用 Model 傳遞變數給模板
+> 回傳字串即模板名稱，Spring Boot 會自動解析為對應 .html 文件。
+
+## 5. 測試與啟動
+
+啟動 Spring Boot 專案，瀏覽器打開
+
+```bash
+http://localhost:8080/hello
+```
+
+預期看到：Hello, Vic!
