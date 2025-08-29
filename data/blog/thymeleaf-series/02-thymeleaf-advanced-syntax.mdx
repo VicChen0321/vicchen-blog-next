@@ -10,6 +10,7 @@ tags: ['Thymeleaf', 'Spring Boot', 'Java']
 
 在 [上一篇文章](/blog/thymeleaf-series/01-thymeleaf-intro-setup) 中，我們完成了 **環境設定**，並建立了第一個簡單的 **Thymeleaf** 模板。  
 本篇將介紹 **Thymeleaf** 語法，並透過範例展示：
+
 - 條件判斷
 - 迴圈處理
 - 內建物件的使用
@@ -104,7 +105,9 @@ Fragment 可以拆分共用區塊，例如 Header、Footer、簽名...等，方�
 在 `src/main/resources/templates/fragments/header.html`：
 
 ```html
-<header><h2 th:text="${title}">電子報標題</h2></header>
+<header th:fragment="header(title)">
+  <h2 th:text="${title}">預設標題</h2>
+</header>
 ```
 
 ### 共用 Footer
@@ -112,7 +115,7 @@ Fragment 可以拆分共用區塊，例如 Header、Footer、簽名...等，方�
 在 `src/main/resources/templates/fragments/footer.html`：
 
 ```html
-<footer>
+<footer th:fragment="footer">
   <p>感謝您的支持</p>
   <p>客服信箱：support@example.com</p>
 </footer>
@@ -123,7 +126,7 @@ Fragment 可以拆分共用區塊，例如 Header、Footer、簽名...等，方�
 ```html
 <html xmlns:th="http://www.thymeleaf.org">
   <body>
-    <div th:replace="fragments/header :: header"></div>
+    <div th:replace="fragments/header :: header('訂單通知')"></div>
     <p th:text="'親愛的 ' + ${user.name} + ' 您好！'">親愛的 客戶 您好！</p>
 
     <table border="1" cellpadding="5" cellspacing="0">
