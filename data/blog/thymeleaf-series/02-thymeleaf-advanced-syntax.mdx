@@ -1,0 +1,165 @@
+---
+title: '[Thymeleaf 教學筆記] 2. 語法教學'
+date: '2025-08-29'
+draft: false
+summary: '深入探索 Thymeleaf 的進階語法，包含條件判斷、迴圈處理、內建物件，以及模板重用技巧。'
+tags: ['Thymeleaf', 'Spring Boot', 'Java']
+---
+
+# 前言
+
+在 [上一篇文章](/blog/thymeleaf-series/01-thymeleaf-intro-setup) 中，我們完成了 **環境設定**，並建立了第一個簡單的 **Thymeleaf** 模板。  
+本篇將介紹 **Thymeleaf** 語法，並透過範例展示：
+- 條件判斷
+- 迴圈處理
+- 內建物件的使用
+- 模板 Fragment 的拆分與重用
+
+掌握這些技巧後，你可以更靈活地生成動態內容，並維護可重用的模板。
+
+---
+
+# 1. 表達式語法
+
+Thymeleaf 的表達式主要分為兩種：
+
+| 表達式 | 說明                                          | 範例           |
+| ------ | --------------------------------------------- | -------------- |
+| `${}`  | 常規變數表達式，用於 Model 資料               | `${user.name}` |
+| `*{}`  | 適用於表單綁定，綁定 `th:object` 範圍內的變數 | `*{email}`     |
+
+```html
+<p th:text="'親愛的 ' + ${user.name} + ' 您好！'">親愛的 客戶 您好！</p>
+```
+
+> [!TIP]
+> `${}` 幾乎在所有情境都適用，`*{}` 主要用於表單處理場景。
+
+# 2. 條件判斷
+
+**可以根據變數值控制元素顯示：**
+
+```html
+<p th:if="${user.premium}">感謝您成為 VIP 會員！</p>
+<p th:unless="${user.premium}">升級會員，享受更多優惠！</p>
+```
+
+**三元運算子範例：**
+
+```html
+<p th:text="${user.active} ? '您的帳號已啟用' : '請點擊連結啟用帳號'">帳號狀態</p>
+```
+
+> [!TIP]
+> `th:if` 與 `th:unless` 用於控制元素顯示或隱藏，三元運算子可在文字或屬性中使用。
+
+# 3. 迴圈處理 (`th:each`)
+
+使用 `th:each` 遍歷集合，生成列表：
+
+```html
+<table border="1" cellpadding="5" cellspacing="0">
+  <thead>
+    <tr>
+      <th>商品名稱</th>
+      <th>數量</th>
+      <th>價格</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr th:each="item : ${order.items}">
+      <td th:text="${item.name}">商品名稱</td>
+      <td th:text="${item.quantity}">數量</td>
+      <td th:text="${item.price}">價格</td>
+    </tr>
+  </tbody>
+</table>
+```
+
+> [!NOTE]
+> `th:each` 可搭配任何集合，如 List、Set 或其他 Iterable。
+
+# 4. 常用內建物件
+
+Thymeleaf 提供多種工具物件，例如格式化日期、數字、字串或操作集合：
+
+| 物件名稱   | 功能         | 範例                                     |
+| ---------- | ------------ | ---------------------------------------- |
+| `#dates`   | 處理日期時間 | `${#dates.format(today, 'yyyy-MM-dd')}`  |
+| `#strings` | 字串工具     | `${#strings.toUpperCase(user.name)}`     |
+| `#numbers` | 數字格式化   | `${#numbers.formatDecimal(price, 1, 2)}` |
+| `#lists`   | 集合工具     | `${#lists.size(users)}`                  |
+
+```html
+<p>今天日期：<span th:text="${#dates.format(today, 'yyyy/MM/dd')}"></span></p>
+<p>使用者名稱：<span th:text="${#strings.toUpperCase(user.name)}"></span></p>
+```
+
+# 5. 模板重用 (Fragments)
+
+Fragment 可以拆分共用區塊，例如 Header、Footer、簽名...等，方便重用和維護。
+
+### 共用 Header
+
+在 `src/main/resources/templates/fragments/header.html`：
+
+```html
+<header><h2 th:text="${title}">電子報標題</h2></header>
+```
+
+### 共用 Footer
+
+在 `src/main/resources/templates/fragments/footer.html`：
+
+```html
+<footer>
+  <p>感謝您的支持</p>
+  <p>客服信箱：support@example.com</p>
+</footer>
+```
+
+### 引用 Fragment
+
+```html
+<html xmlns:th="http://www.thymeleaf.org">
+  <body>
+    <div th:replace="fragments/header :: header"></div>
+    <p th:text="'親愛的 ' + ${user.name} + ' 您好！'">親愛的 客戶 您好！</p>
+
+    <table border="1" cellpadding="5" cellspacing="0">
+      <thead>
+        <tr>
+          <th>商品名稱</th>
+          <th>數量</th>
+          <th>價格</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="item : ${order.items}">
+          <td th:text="${item.name}">商品名稱</td>
+          <td th:text="${item.quantity}">數量</td>
+          <td th:text="${item.price}">價格</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div th:replace="fragments/footer :: footer"></div>
+  </body>
+</html>
+```
+
+> [!TIP]
+> `th:replace` 會用指定片段完整替換標籤內容，`th:insert` 則是插入在原有標籤內。
+
+---
+
+# 小結
+
+本文介紹了 **Thymeleaf** 的語法：
+
+- 動態文字與條件判斷
+- 集合迴圈渲染
+- 內建工具物件格式化
+- 共用 Fragment 區塊
+
+下一篇將示範如何整合 **Spring Mail**，生成可寄送的動態 HTML 模板。
