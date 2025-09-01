@@ -6,7 +6,7 @@ const siteMetadata = {
   description: 'Vic Chen 官方部落格 | 分享程式教學、學習筆記...等內容',
   language: 'en-us',
   theme: 'system', // system, dark or light
-  siteUrl: 'https://vicchen-blog-next.vercel.app/',
+  siteUrl: 'https://vicchen.dev/',
   siteRepo: 'https://github.com/VicChen0321/vicchen-blog-next',
   siteLogo: `${process.env.BASE_PATH || ''}/static/images/logo.png`,
   socialBanner: `${process.env.BASE_PATH || ''}/static/images/twitter-card.png`,
