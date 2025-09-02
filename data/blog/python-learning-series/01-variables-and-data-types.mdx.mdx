@@ -1,0 +1,62 @@
+---
+title: '[Python 學習筆記] 1-變數和資料型別'
+date: '2025-09-03'
+tags: ['Python']
+draft: true
+summary: '記錄一些 Python 學習的語法與基本型別操作筆記'
+---
+
+# 變數和資料型別
+
+Python 提供多種基本型別，用來存放不同種類的資料。與其他像是 C++, Java 靜態型別語言不同，Python 的變數不需要事先宣告型別，屬於 **動態型別**，可以隨時指向不同型別的物件。
+
+## 基本型別
+
+- 整數（Integer）：表示沒有小數點的數值。
+- 浮點數（Float）：表示帶有小數點的數值。
+- 字串（String）：表示文本，由字符組成，用引號（單引號或雙引號）括起來。
+- 布林值（Boolean）：表示 True / False。
+- **None**：表示「沒有值」或「尚未設定」，類似其他語言的 `Null`。
+
+> [!NOTE]
+> Python 的 `float` 對應到 Java 的 `Double`，都是 64-bit 雙精度浮點數。如果需要更高精度，可以使用 `decimal.Decimal`（相當於 Java 的 `BigDecimal`）。
+
+```python
+x = 25            # Integer
+x = 1.75          # Float
+x = "Alice"       # String
+x = True          # Boolean
+x = None          # None (空值)
+```
+
+## 型別檢查與轉換
+
+```python
+# 型別檢查
+print(type(x))  # <class 'NoneType'>
+
+# 型別轉換
+y = "42"
+print(int(y))    # 42
+print(float(y))  # 42.0
+print(str(123))  # '123'
+```
+
+---
+
+# 基本的輸入輸出(Input/Output) 操作
+
+Python 使用 `input()` 讀取使用者輸入，使用 `print()` 輸出訊息。
+
+```python
+# 輸入
+name = input("Enter your name: ")
+age = int(input("Enter your age: "))
+
+# 輸出
+print(f"Hello {name}, next year you'll be {age + 1}")
+```
+
+> [!TIP]
+> `input()` 會讀入 字串，如果需要數字，**記得轉型**。
+> `f-string` 可以快速將變數插入字串，比傳統拼接更直覺。

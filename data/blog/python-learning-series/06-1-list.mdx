@@ -1,0 +1,160 @@
+---
+title: '[Python 學習筆記] 6-1 List（列表）'
+date: '2025-09-08'
+tags: ['Python']
+draft: true
+summary: 'Python List 的用法與技巧整理'
+---
+
+# List（列表）
+
+**List：有序、可變的元素集合**  
+可以包含不同型別的元素，常用於需要儲存一組有順序且可修改的資料。
+
+---
+
+## 建立 List
+
+```python
+# 空 list
+lst1 = []
+
+# 含元素
+lst2 = [1, 2, 3]
+
+# 使用 list() 函式
+lst3 = list(range(5))  # [0,1,2,3,4]
+
+# 列表推導式
+lst4 = [x**2 for x in range(5)]  # [0,1,4,9,16]
+```
+
+---
+
+## 訪問元素
+
+```python
+lst = [10, 20, 30, 40]
+
+print(lst[0])   # 10
+print(lst[-1])  # 40
+
+# 切片
+print(lst[1:3])  # [20, 30]
+print(lst[:2])   # [10, 20]
+print(lst[2:])   # [30, 40]
+print(lst[::2])  # [10, 30]  每隔 2 個取一個
+```
+
+---
+
+## 新增與修改
+
+```python
+lst = [1, 2, 3]
+
+# 修改
+lst[0] = 10
+
+# 新增
+lst.append(4)       # 末尾新增
+lst.insert(1, 15)   # 插入到指定位置
+lst.extend([5,6])   # 合併另一個 list
+```
+
+---
+
+## 刪除元素
+
+```python
+lst = [1, 2, 3, 4]
+
+lst.pop()       # 刪除最後一個，返回值 4
+lst.pop(1)      # 刪除索引 1，返回值 2
+lst.remove(3)   # 刪除值為 3 的元素
+lst.clear()     # 清空 list
+```
+
+---
+
+## 搜尋與統計
+
+```python
+lst = [1, 2, 2, 3, 4]
+
+2 in lst          # True
+lst.index(3)      # 3 的索引位置
+lst.count(2)      # 2 出現的次數
+```
+
+---
+
+## 排序與反轉
+
+```python
+lst = [3,1,4,2]
+
+lst.sort()              # 升序 [1,2,3,4]
+lst.sort(reverse=True)  # 降序 [4,3,2,1]
+
+lst.reverse()     # 反轉 [4,3,2,1]
+```
+
+---
+
+## 遍歷 List
+
+```python
+lst = [10, 20, 30]
+
+# for-each
+for x in lst:
+    print(x)
+
+# 帶索引
+for i, x in enumerate(lst):
+    print(i, x)
+```
+
+---
+
+## 常用小技巧
+
+1. **列表推導式：快速生成 list**
+
+```python
+squares = [x**2 for x in range(5)]   # [0,1,4,9,16]
+evens = [x for x in range(10) if x%2==0]  # [0,2,4,6,8]
+```
+
+2. **多維 List：**
+
+```python
+matrix = [[1,2,3],[4,5,6],[7,8,9]]
+print(matrix[1][2])  # 6
+```
+
+3. **複製 List**
+
+```python
+lst2 = lst1.copy()       # 複製
+lst3 = lst1[:]           # 切片複製
+```
+
+---
+
+## 常用方法
+
+| 方法                            | 功能                                               | 範例                | 結果             |
+| ------------------------------- | -------------------------------------------------- | ------------------- | ---------------- |
+| `append(x)`                     | 在末尾新增元素                                     | `lst.append(3)`     | `[1,2,3]`        |
+| `insert(i, x)`                  | 在指定索引插入元素                                 | `lst.insert(1, 10)` | `[1,10,2,3]`     |
+| `extend(iterable)`              | 合併另一個 list 或可迭代對象                       | `lst.extend([4,5])` | `[1,10,2,3,4,5]` |
+| `remove(x)`                     | 刪除第一個值為 x 的元素                            | `lst.remove(10)`    | `[1,2,3,4,5]`    |
+| `pop([i])`                      | 刪除指定索引元素，返回該值；不傳參數則刪除最後一個 | `lst.pop(2)`        | `[1,2,4,5]`      |
+| `clear()`                       | 清空 list                                          | `lst.clear()`       | `[]`             |
+| `index(x, [start, [end]])`      | 查找元素 x 的索引                                  | `lst.index(4)`      | `3`              |
+| `count(x)`                      | 計算元素 x 出現次數                                | `lst.count(2)`      | `1`              |
+| `sort(reverse=False, key=None)` | 排序                                               | `lst.sort()`        | `[1,2,4,5]`      |
+| `reverse()`                     | 反轉 list                                          | `lst.reverse()`     | `[5,4,2,1]`      |
+| `copy()`                        | 複製 list（淺拷貝）                                | `lst2 = lst.copy()` | `[1,2,4,5]`      |

@@ -1,0 +1,139 @@
+---
+title: '[Python 學習筆記] 2-基本型別運算操作'
+date: '2025-09-04'
+tags: ['Python']
+draft: true
+summary: '記錄 Python 基本型別（數字、字串、布林值、None）及其常用運算方法'
+---
+
+# Python 基本型別運算操作
+
+## Numbers（數字）
+
+Python 主要有整數（`int`）與浮點數（`float`）兩種數字型別。
+
+```python
+# 整數
+x = 10
+y = -3
+type(x)  # <class 'int'>
+
+# 浮點數
+a = 3.14
+b = -2.5
+type(a)  # <class 'float'>
+```
+
+### 常用運算符
+
+| 運算符 | 說明             | 範例     | 結果   |
+| ------ | ---------------- | -------- | ------ |
+| `+`    | 加法             | 1 + 2    | 3      |
+| `-`    | 減法             | 5 - 3    | 2      |
+| `*`    | 乘法             | 3 \* 4   | 12     |
+| `/`    | 除法（浮點結果） | 7 / 3    | 2.333… |
+| `//`   | 整除             | 7 // 3   | 2      |
+| `%`    | 取餘數           | 7 % 3    | 1      |
+| `**`   | 次方             | 2 \*\* 3 | 8      |
+
+### 常用函數
+
+```
+import math
+import numpy as np
+
+math.sqrt(16)       # 4.0
+math.exp(1)         # e 的次方
+np.float32(3.14)    # 3.14，單精度
+np.float64(3.14)    # 3.14，雙精度
+```
+
+> [!TIP]
+> Python 的 int 沒有位元數限制（任意大整數），浮點數對應 64-bit 雙精度。需要高精度可用 decimal.Decimal。
+> 如果想知道 `int` 用了多少 byres，可以用 `sys.getsizeof()` 去確認
+
+---
+
+## String（字串）
+
+字串是文字序列，可以使用單引號 ' 或雙引號 "。
+
+```python
+s = "Python"
+
+# 訪問字元
+print(s[0])   # P
+print(s[-1])  # n
+
+# 切片
+print(s[:3])  # Pyt
+print(s[3:])  # hon
+
+# 判斷子字串
+print("py" in s)  # True
+
+# f-string
+name = "Bob"
+age = 30
+print(f"My name is {name}, I am {age} years old")
+
+
+```
+
+---
+
+## Boolean（布林值）
+
+布林值只有兩個：True 與 False，常用於條件判斷或邏輯運算。
+
+```python
+t = True
+f = False
+
+# 邏輯運算
+print(t and f)  # False
+print(t or f)   # True
+print(not t)    # False
+```
+
+---
+
+## None（空值）
+
+```python
+x = None
+print(x is None)  # True
+```
+
+> [!NOTE]
+> `None` 表示「沒有值」，類似其他語言的 `null`。常用於函數返回空結果或初始化變數。
+
+---
+
+## 型別轉換方法
+
+```python
+x = "42"
+
+y = int(x)       # 字串 -> 整數
+z = float(x)     # 字串 -> 浮點數
+s = str(123)     # 整數 -> 字串
+```
+
+### 小技巧
+
+- `bool(x)` 可將任意值轉成布林值，非零數字與非空字串會被視為 `True`：
+
+  ```python
+  bool(0)       # False
+  bool(1)       # True
+  bool("")      # False
+  bool("abc")   # True
+  ```
+
+- `chr()` 與 `ord()` 用於字元與 ASCII/Unicode 整數轉換：
+
+```python
+chr(65)   # 'A'
+ord('A')  # 65
+```

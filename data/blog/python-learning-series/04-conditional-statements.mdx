@@ -1,0 +1,91 @@
+---
+title: '[Python 學習筆記] 4-條件判斷'
+date: '2025-09-06'
+tags: ['Python']
+draft: true
+summary: '記錄一些 Python 學習的語法等筆記'
+---
+
+# 條件判斷（if / elif / else）
+
+Python 的條件判斷語法相當直覺，使用 `if`、`elif`、`else` 配合縮排（indentation）來表達程式的邏輯分支。
+
+---
+
+## 基本語法
+
+```python
+x = 10
+if x > 0:
+    print("Positive")
+elif x == 0:
+    print("Zero")
+else:
+    print("Negative")
+```
+
+> [!IMPORTANT]
+> Python 中 縮排是語法的一部分，不能混用 tab 與空格，通常使用 4 個空格。
+
+## 布林判斷（Truthy / Falsy）
+
+以下物件會被視為 False：
+
+- 0 或 0.0
+- 空字串 ""
+- 空容器，如 []、{}、set()
+- None
+
+其他值則都會被視為 True：
+
+```python
+if "Python":
+    print("This is True")  # 因為非空字串被視為 True
+
+if 0:
+    print("Never print")   # 因為 0 是 False
+```
+
+---
+
+## 巢狀條件
+
+條件語句可以巢狀使用：
+
+```python
+age = 20
+if age >= 18:
+    if age >= 65:
+        print("Senior")
+    else:
+        print("Adult")
+else:
+    print("Minor")
+```
+
+---
+
+## 條件運算子（Ternary Expression）
+
+適合單行判斷的情境：
+
+```python
+x = 10
+result = "Even" if x % 2 == 0 else "Odd"
+print(result)  # Even
+```
+
+---
+
+## 使用 `in` / `not in`
+
+用於判斷元素是否存在於容器（list、dict、set、string）中：
+
+```python
+name = "Alice"
+if "A" in name:
+print("Contains A")
+
+if "z" not in name:
+print("No z found")
+```

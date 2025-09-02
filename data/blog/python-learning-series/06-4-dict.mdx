@@ -1,0 +1,128 @@
+---
+title: '[Python 學習筆記] 6-4 Dict（字典）'
+date: '2025-09-08'
+tags: ['Python']
+draft: true
+summary: 'Python Dict 的用法與技巧整理'
+---
+
+# Dict（字典）
+
+**Dict（字典）**：鍵值對（key-value）集合
+
+**特點：**
+
+- key 必須是不可變類型（str、int、tuple 等）
+- value 可以是任意類型
+- 無序（Python 3.7+ 之後維持插入順序）
+
+---
+
+## 創建字典
+
+```python
+# 方法 1：使用大括號
+d1 = {'a': 1, 'b': 2}
+
+# 方法 2：使用 dict() 函式
+d2 = dict(a=1, b=2)
+
+# 方法 3：空字典後添加
+d3 = {}
+d3['a'] = 1
+d3['b'] = 2
+```
+
+---
+
+## 查詢
+
+```python
+d = {'a': 1, 'b': 2}
+
+# 取值
+print(d['a'])    # 1
+
+# 使用 get() 避免 KeyError
+print(d.get('c'))       # None
+print(d.get('c', 0))    # 0，預設值
+
+# 判斷 key 是否存在
+print('a' in d)  # True
+print('c' in d)  # False
+
+# 取得所有的 keys
+keys = d.keys()
+
+# 取得所有的 values
+values = d.values()
+
+```
+
+---
+
+## 新增與修改
+
+```python
+d = {'a': 1, 'b': 2}
+
+# 修改值
+d['a'] = 10
+
+# 新增鍵值對
+d['c'] = 30
+```
+
+---
+
+## 刪除
+
+```python
+d = {'a': 1, 'b': 2, 'c': 3}
+
+# 使用 del
+del d['b']
+
+# 使用 pop() 並返回刪除值
+val = d.pop('c')
+print(val)  # 3
+
+# 清空字典
+d.clear()
+```
+
+---
+
+## 遍歷 Dict
+
+```python
+d = {'a': 1, 'b': 2, 'c': 3}
+
+# 遍歷 key
+for k in d:
+    print(k)
+
+# 遍歷 value
+for v in d.values():
+    print(v)
+
+# 遍歷 key-value
+for k, v in d.items():
+    print(k, v)
+
+```
+
+---
+
+## 常用方法
+
+| 方法                   | 功能                                        |
+| ---------------------- | ------------------------------------------- |
+| `d.keys()`             | 返回所有 key                                |
+| `d.values()`           | 返回所有 value                              |
+| `d.items()`            | 返回所有 (key, value) 元組                  |
+| `d.get(key, default)`  | 取值，key 不存在返回 default                |
+| `d.pop(key)`           | 刪除 key，並返回 value                      |
+| `d.popitem()`          | 刪除最後一個插入的鍵值對，返回 (key, value) |
+| `d.update(other_dict)` | 合併另一個字典                              |
+| `d.clear()`            | 清空字典                                    |

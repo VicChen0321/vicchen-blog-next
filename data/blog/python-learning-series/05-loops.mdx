@@ -1,0 +1,153 @@
+---
+title: '[Python 學習筆記] 5-迴圈語句'
+date: '2025-09-07'
+tags: ['Python']
+draft: true
+summary: '記錄 Python 中 for 與 while 迴圈的語法與常見技巧'
+---
+
+# 迴圈（for / while）
+
+在 Python 中，迴圈用於 **重複執行程式碼**，常搭配 `range()`、`enumerate()`，並可透過 `break` 與 `continue` 控制流程。
+
+---
+
+## `for` 迴圈
+
+用於 **遍歷可迭代物件**，如 `list`、`tuple`、`dict`、`string` 等。
+
+```python
+for i in range(5):
+    print(i)
+# 輸出: 0 1 2 3 4
+```
+
+---
+
+## `while` 迴圈
+
+當條件為 `True` 時，持續執行程式碼：
+
+```python
+count = 0
+while count < 5:
+    print(count)
+    count += 1
+```
+
+## 流程控制：`break` 與 `continue`
+
+- `break`: 立即跳出整個迴圈
+- `continue`: 跳過當前迭代，繼續下一輪
+
+```python
+for i in range(5):
+    if i == 3:
+        break
+    print(i)
+# 輸出: 0 1 2
+
+for i in range(5):
+    if i == 2:
+        continue
+    print(i)
+# 輸出: 0 1 3 4
+```
+
+---
+
+## range() 用法
+
+`range()` 可以生成一個整數序列，常搭配 for 迴圈使用：
+
+| 寫法                        | 範例               | 結果             |
+| --------------------------- | ------------------ | ---------------- |
+| `range(stop)`               | `range(5)`         | `0, 1, 2, 3, 4`  |
+| `range(start, stop)`        | `range(2, 5)`      | `2, 3, 4`        |
+| `range(start, stop, step)`  | `range(1, 10, 2)`  | `1, 3, 5, 7, 9`  |
+| `range(start, stop, -step)` | `range(10, 0, -2)` | `10, 8, 6, 4, 2` |
+
+---
+
+## `enumerate()` 用法
+
+在迴圈中同時取得索引（index）與值（value），比 range(len(...)) 更 Pythonic[^Pythonic]。
+
+```python
+fruits = ['apple', 'banana', 'cherry']
+
+for i, fruit in enumerate(fruits):
+    print(i, fruit)
+
+# 輸出:
+# 0 apple
+# 1 banana
+# 2 cherry
+```
+
+- 指定**起始索引：**
+
+```python
+for i, fruit in enumerate(fruits, start=1):
+    print(i, fruit)
+
+# 輸出
+# 1 apple
+# 2 banana
+# 3 cherry
+```
+
+> [!TIP]
+> 如果你只需要索引：`for i, _ in enumerate(fruits)`<br/>
+> 如果你只需要值：直接用 `for fruit in fruits` 就行。
+
+---
+
+## `for-else` 語法
+
+`else` 區塊會在 迴圈正常結束 時執行，但若使用 `break` 中途跳出，則不會執行。
+
+> In a for or while loop the break statement may be paired with an else clause. If the loop finishes without executing the break, the else clause executes.
+
+不使用 `for-else` 寫法：
+
+```python
+nums = [60, 70, 30, 110, 90]
+found = False
+for n in nums:
+    if n > 100:
+        found = True
+        print "There is a number bigger than 100"
+        break
+if not found:
+    print "Not found!"
+```
+
+使用 `for-else` 寫法：
+
+```python
+nums = [60, 70, 30, 110, 90]
+for n in nums:
+    if n > 100:
+        print "There is a number bigger than 100"
+        break
+else:
+    print "Not found!"
+```
+
+> [!TIP]
+> 透過 `for-else` 寫法，可以節省一些 flag 使用
+
+---
+
+## 巢狀迴圈（Nested Loops）
+
+巢狀迴圈適用於多層結構處理，但需注意效能：
+
+```python
+for i in range(3):
+    for j in range(2):
+        print(f"i={i}, j={j}")
+```
+
+[^Pythonic]: Pythonic: 這個詞用來形容使用符合 Python 設計理念、風格和語法習慣的程式碼，強調簡潔、易讀、高效且符合語言特性的寫法。
