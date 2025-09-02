@@ -1,14 +1,15 @@
 {
-  "python": 1,
+  "lombok": 1,
+  "jackson": 1,
+  "java": 3,
+  "deserialization": 1,
+  "algorithm": 3,
+  "prefix-sum": 1,
+  "difference-array": 1,
   "life": 1,
   "movie": 1,
   "thymeleaf": 2,
   "spring-boot": 2,
-  "java": 3,
-  "algorithm": 2,
   "go": 2,
-  "go-學習系列": 2,
-  "lombok": 1,
-  "jackson": 1,
-  "deserialization": 1
+  "go-學習系列": 2
 }

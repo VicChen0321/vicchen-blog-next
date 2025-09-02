@@ -1,0 +1,122 @@
+---
+title: '[演算法筆記] Prefix Sum & Difference Array 前綴和與差分陣列'
+date: '2025-09-02'
+summary: '整理 Prefix Sum 與 Difference Array 的核心概念、模板，幫助快速複習與面試實戰。'
+tags: ['Algorithm', 'Prefix Sum', 'Difference Array']
+---
+
+# 前言
+
+在演算法面試中，**Prefix Sum（前綴和）** 與 **Difference Array（差分陣列）** 是兩個非常常見且高效的技巧。  
+在處理陣列相關問題時，經常會遇到要計算特定範圍內的數字總和，若每次都要從頭計算，很明顯效率不高。
+因此在 **子陣列區間查詢** 還是 **區間更新** 等題目，這兩個技巧都能大幅優化演算法效率，從 `O(n^2)` 降到 `O(n)` 或 `O(1)` 查詢。
+
+---
+
+# 核心概念
+
+## 1. Prefix Sum（前綴和）
+
+**定義：**  
+前綴和是透過 **預先計算陣列從起點累加到某個位置的總和**，讓之後的區間查詢快速完成。
+
+公式：
+
+```python
+prefix[i] = prefix[i-1] + nums[i]
+```
+
+計算區間 `[l, r]` 的和：
+
+```python
+sum(l, r) = prefix[r] - prefix[l-1]
+```
+
+---
+
+## 2. Difference Array（差分陣列）
+
+**定義：**  
+差分陣列是一種 **處理多次區間加法更新** 的技巧，核心概念是只記錄「變化點」。
+
+公式：
+
+```python
+diff[l] += val
+diff[r+1] -= val
+```
+
+最後再透過前綴和還原結果。
+
+---
+
+# 常見模板
+
+## 1. Prefix Sum 基本模板
+
+```python
+def prefix_sum(nums):
+    prefix = [0] * (len(nums) + 1)
+    for i in range(1, len(nums) + 1):
+        prefix[i] = prefix[i-1] + nums[i-1]
+    return prefix
+
+# 區間和查詢
+def range_sum(prefix, l, r):
+    return prefix[r+1] - prefix[l]
+```
+
+---
+
+## 2. 二維 Prefix Sum 模板
+
+適合用於矩陣（Matrix）的子區域和查詢。
+
+```python
+def prefix_sum_2d(matrix):
+    m, n = len(matrix), len(matrix[0])
+    prefix = [[0] * (n+1) for _ in range(m+1)]
+    for i in range(1, m+1):
+        for j in range(1, n+1):
+            prefix[i][j] = (
+                matrix[i-1][j-1]
+                + prefix[i-1][j]
+                + prefix[i][j-1]
+                - prefix[i-1][j-1]
+            )
+    return prefix
+
+# 區間和查詢
+def range_sum_2d(prefix, x1, y1, x2, y2):
+    return (
+        prefix[x2+1][y2+1]
+        - prefix[x1][y2+1]
+        - prefix[x2+1][y1]
+        + prefix[x1][y1]
+    )
+```
+
+---
+
+## 3. Difference Array 模板
+
+```python
+def difference_array(nums):
+    diff = [0] * (len(nums) + 1)
+    diff[0] = nums[0]
+    for i in range(1, len(nums)):
+        diff[i] = nums[i] - nums[i-1]
+    return diff
+
+def update_range(diff, l, r, val):
+    diff[l] += val
+    if r + 1 < len(diff):
+        diff[r + 1] -= val
+
+def restore_array(diff):
+    res = [0] * (len(diff) - 1)
+    res[0] = diff[0]
+    for i in range(1, len(res)):
+        res[i] = res[i-1] + diff[i]
+    return res
+```
