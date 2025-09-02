@@ -1,10 +1,10 @@
 {
+  "python": 10,
   "algorithm": 3,
   "prefix-sum": 1,
   "difference-array": 1,
   "life": 1,
   "movie": 1,
-  "python": 10,
   "thymeleaf": 2,
   "spring-boot": 2,
   "java": 3,
