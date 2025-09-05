@@ -1,6 +1,6 @@
 /** @type {import("pliny/config").PlinyConfig } */
 const siteMetadata = {
-  title: 'Blog | Vic Chen 軟體工程師成長部落格',
+  title: 'Vic Chen 軟體工程師成長部落格',
   author: 'Vic Chen',
   headerTitle: 'VicChen | Blog',
   description: 'Vic Chen 官方部落格 | 分享程式教學、學習筆記...等內容',
