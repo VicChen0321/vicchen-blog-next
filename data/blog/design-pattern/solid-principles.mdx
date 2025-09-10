@@ -1,0 +1,322 @@
+---
+title: '[設計模式筆記] SOLID 原則'
+date: '2025-09-10'
+tags: ['Design Pattern']
+draft: false
+summary: 'SOLID 是物件導向設計的核心五大原則，理解這些原則有助於更好地應用設計模式，寫出更易維護與擴充的程式。'
+---
+
+## 前言
+
+在談設計模式之前，我們需要先理解「好的程式設計應該遵循什麼原則」。  
+**SOLID** 就是最常被引用的物件導向設計五大原則。  
+它不僅是工程師日常開發的最佳實踐，也是面試中常見的會去詢問的問題。
+
+---
+
+## SOLID 是什麼？
+
+SOLID 是五個設計原則的縮寫，由 [Rober C. Martin](https://en.wikipedia.org/wiki/Robert_C._Martin) 提出。
+這些原則旨在引導程式開發者去建構出，更具**可理解性**、**可維護性**、**可擴充性**的軟體系統
+
+- **S = Single Responsibility Principle (單一職責原則)**
+- **O = Open/Closed Principle (開放封閉原則)**
+- **L = Liskov Substitution Principle (里氏替換原則)**
+- **I = Interface Segregation Principle (介面隔離原則)**
+- **D = Dependency Inversion Principle (依賴反轉原則)**
+
+---
+
+## SOLID 原則說明
+
+### 1. S - 單一職責原則（Single Responsibility Principle, SRP）
+
+> A class should have one and only one reason to change, meaning that a class should have only one job.
+>
+> 一個類別應該只有一個、且僅有一個導致它變更的原因，也就是說，一個類別應該只負責一項職責。
+
+**白話解釋：**
+一個類別應該專注做一件事。若同時承擔多個職責，修改其中一個時可能影響其他職責，導致程式脆弱。
+
+**要解決的問題：**
+避免產生一個「萬能類別（God Class）[^GodClass]」，這個類別什麼都做，導致程式碼高度耦合、難以測試與修改。
+
+[^GodClass]: God Class：指一個類別包山包海、負責過多職責，導致難以維護與測試，違反單一職責原則。
+
+**範例：**
+
+- **❌ Bad design**
+
+```java
+class Employee {
+    public void calculatePay() { /* 計算薪資 */ }
+    public void saveToDatabase() { /* 存儲員工資料到資料庫 */ }
+    public void generateReport() { /* 產生員工報表 */ }
+}
+```
+
+這個 Employee 類別同時負責了薪資計算、資料庫操作、報表產生三件不同的事。
+
+- **✅ Good design**
+
+```java
+class EmployeePayCalculator {
+    public void calculatePay() { /* 只負責計算薪資 */ }
+}
+class EmployeeRepository {
+    public void saveToDatabase() { /* 只負責資料庫操作 */ }
+}
+class EmployeeReportGenerator {
+    public void generateReport() { /* 只負責產生報表 */ }
+}
+```
+
+將職責拆分到不同的類別中，每個類別都只專注於一件事。
+
+---
+
+### 2. O - 開放封閉原則 (Open/Closed Principle, OCP)
+
+> Objects or entities **should be open for extension but closed for modification**.
+>
+> 一個物件或一個實體，應該對於擴展是開放的，但對於修改是封閉的
+
+**白話解釋：**
+當需要為 class, module, function...等增加新功能時，你應該透過增加新的程式碼來實現，而不是去修改已經存在的舊程式碼。
+
+> [!NOTE]
+> 類似 Google Chrome 的概念，我可以增加很多 Plugin 去增加功能，但同時不會對於本體造成影響
+
+**要解決的問題：**
+防止因為增加新功能而破壞既有的、已經穩定運作的程式碼，減少引入 bug 的風險。
+
+**範例：**
+
+- **❌ Bad design**
+
+```java
+// 一個處理支付的類別
+public class PaymentService {
+
+    // 支付方法，根據支付類型(paymentType)來決定如何處理
+    public void processPayment(String paymentType, double amount) {
+        if ("credit_card".equals(paymentType)) {
+            // 處理信用卡付款的邏輯
+        } else if ("apple_pay".equals(paymentType)) {
+            // 處理 Apple Pay 付款的邏輯
+        }
+        // ... 其他邏輯
+    }
+}
+```
+
+每次增加新的形狀，都必須修改 `processPayment` 方法，違反了「對修改封閉」的原則。
+
+- **✅ Good design**
+
+```java
+interface PaymentGateway {
+    void pay(double amount);
+}
+class CreditCardPayment implements PaymentGateway {
+    void pay(double amount); { /* 進行信用卡付款 */ }
+}
+class ApplePayPayment implements PaymentGateway {
+    void pay(double amount); { /* 進行 Apple Pay 付款 */ }
+}
+// 當要增加 Line pay 付款時，"新增"一個類別
+class LinePayPayment implements PaymentGateway {
+    void pay(double amount); { /* 進行 Line Pay 付款 */ }
+}
+
+public class PaymentService {
+    public void processPayment(PaymentGateway paymentGateway, double amount) {
+        paymentGateway.pay(amount);
+    }
+}
+```
+
+`PaymentService` 不再需要修改。未來要增加任何支付方式，只需新增一個實作 `PaymentGateway` 介面的類別即可。這就是「對擴展開放」。
+
+---
+
+### 3. L - 里氏替換原則 (Liskov Substitution Principle, LSP)
+
+> Let q(x) be a property provable about objects of x of type T. Then q(y) should be provable for objects y of type S where S is a subtype of T
+>
+> 設 q(x) 為一個可以對型別 T 的物件 x 證明成立的性質。那麼，對於型別 S 的物件 y（其中 S 是 T 的子型別），q(y) 也應該是可證明成立的。
+
+**白話解釋：**
+在任何使用父類別的地方，都應該可以直接用其子類別來替換，而整個程式的行為和邏輯都不會發生改變或出錯。子類別應該是「is-a」的關係，而不僅僅是「looks-like-a」。
+
+**要解決的問題：**
+確保繼承關係的正確性，防止子類別覆寫（override）父類別的方法後，產生非預期的行為，破壞了原有的多型（Polymorphism）特性。
+
+**範例：**
+
+- **❌ Bad design**
+
+```java
+class Rectangle {
+    protected int width;
+    protected int height;
+    public void setWidth(int width) { this.width = width; }
+    public void setHeight(int height) { this.height = height; }
+    public int getArea() { return width * height; }
+}
+
+class Square extends Rectangle {
+    @Override
+    public void setWidth(int width) {
+        this.width = width;
+        this.height = width; // 正方形的寬高必須相等
+    }
+    @Override
+    public void setHeight(int height) {
+        this.width = height;
+        this.height = height; // 正方形的寬高必須相等
+    }
+}
+```
+
+問題發生在哪？假設有個函式這樣用：
+
+```java
+void test(Rectangle r) {
+    r.setWidth(5);
+    r.setHeight(4);
+    assert(r.getArea() == 20); // 斷言面積應該是 5 * 4 = 20
+}
+當你傳入 `Rectangle` 物件時，測試會通過。但當你傳入 `Square` 物件（`test(new Square())`）時，因為 `setHeight(4)` 會把 `width` 也變成 4，所以面積變成 16，斷言失敗！
+這表示 `Square` 不能安全地替換 `Rectangle`，違反了里氏替換原則。
+```
+
+---
+
+### 4. I - 介面隔離原則 (Interface Segregation Principle, ISP)
+
+> A client should never be forced to implement an interface that it doesn’t use, or clients shouldn’t be forced to depend on methods they do not use.
+>
+> 一個模組永遠不該被強迫去實現它不使用的接口，或者一個模組不應該被強迫依賴他們不使用的方法
+
+**白話解釋：**
+與其建立一個龐大、臃腫的「萬能介面」，不如將它拆分成多個功能單一、小而專精的介面。類別只需要實作它真正需要的那些介面即可。
+
+**要解決的問題：**
+避免因為一個介面功能過多，導致實作該介面的類別被迫實作一些它根本用不到的方法，造成程式碼的浪費與誤解。
+
+**範例：**
+
+- **❌ Bad design**
+
+```
+interface IWorker {
+    void work();
+    void eat();
+}
+class Programmer implements IWorker {
+    public void work() { /* 寫程式 */ }
+    public void eat() { /* 吃午餐 */ }
+}
+class Robot implements IWorker {
+    public void work() { /* 組裝零件 */ }
+    public void eat() { /* 機器人不需要吃東西，這個方法是多餘的 */ }
+}
+```
+
+`Robot` 被迫要實作一個它用不到的 `eat` 方法。
+
+- **✅ Good design**
+
+```java
+interface IWorkable {
+    void work();
+}
+interface IEatable {
+    void eat();
+}
+class Programmer implements IWorkable, IEatable {
+    public void work() { /* 寫程式 */ }
+    public void eat() { /* 吃午餐 */ }
+}
+class Robot implements IWorkable {
+    public void work() { /* 組裝零件 */ }
+}
+```
+
+將介面拆分後，Robot 只需要實作它真正需要的 IWorkable 介面。
+
+---
+
+### 5. D - 依賴反轉原則 (Dependency Inversion Principle, DIP)
+
+> Entities must depend on abstractions, not on concretions. It states that the high-level module must not depend on the low-level module, but they should depend on abstractions.
+>
+> 高層模組不應依賴低層模組。它們都應依賴於抽象介面。抽象介面不應該依賴於具體實作，具體實作應依賴於抽象介面
+
+**白話解釋：**
+你的程式碼應該依賴於「介面」或「抽象類別」，而不是依賴於「具體的實作類別」。這樣可以讓你的系統更容易替換掉某個元件，而不會影響到其他部分。這也是「依賴注入」（Dependency Injection）的核心思想。
+
+**要解決的問題：**
+避免高層次的業務邏輯與低層次的具體實作（如資料庫、檔案系統、第三方服務）緊密耦合，一旦低層實作需要更換，高層邏輯就必須跟著修改。
+
+**範例：**
+
+- **❌ Bad design**
+
+```Java
+class MySQLDatabase {
+    public void queryData() { /* 從 MySQL 查詢資料 */ }
+}
+class BusinessLogic {
+    private MySQLDatabase db;
+    public BusinessLogic() {
+        this.db = new MySQLDatabase(); // 直接依賴具體的 MySQLDatabase
+    }
+    public void process() {
+        db.queryData();
+    }
+}
+```
+
+`BusinessLogic` (High-level) 直接依賴 `MySQLDatabase` (Low-level)，如果未來要換成 `PostgreSQL`，就必須修改 `BusinessLogic` 的程式碼。
+
+- **✅ Good design**
+
+```Java
+interface IDatabase { // 建立抽象
+    void queryData();
+}
+class MySQLDatabase implements IDatabase { // 細節依賴抽象
+    public void queryData() { /* 從 MySQL 查詢資料 */ }
+}
+class PostgreSQLDatabase implements IDatabase { // 另一個細節也依賴抽象
+    public void queryData() { /* 從 PostgreSQL 查詢資料 */ }
+}
+
+class BusinessLogic { // 高層依賴抽象
+    private IDatabase db;
+    public BusinessLogic(IDatabase db) { // 透過建構子注入依賴
+        this.db = db;
+    }
+    public void process() {
+        db.queryData();
+    }
+}
+```
+
+現在 `BusinessLogic` 只依賴 `IDatabase` 介面，完全不知道底層用的是 `MySQL` 還是 `PostgreSQL`。我們可以輕易地替換資料庫，而不需要修改任何一行 `BusinessLogic` 的程式碼。
+
+---
+
+## 小結
+
+SOLID 原則提供設計指南，幫助寫出**易維護**、**易測試**、**易擴充**的程式碼：
+
+- **單一職責 (SRP)**：每個類別只做一件事，降低耦合。
+- **開放封閉 (OCP)**：新增功能時擴展，不修改既有程式。
+- **里氏替換 (LSP)**：子類別可安全替換父類別，確保多型（Polymorphism）正確。
+- **介面隔離 (ISP)**：介面專一，小而精，避免不必要依賴。
+- **依賴反轉 (DIP)**：高層依賴抽象，不依賴具體實作，方便替換與測試。
+
+**實務建議**：不必死守每條原則，但在設計階段思考 SOLID，可以讓程式碼更清晰、可維護。
