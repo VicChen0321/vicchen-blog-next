@@ -1,0 +1,76 @@
+---
+title: '[Kubernetes 筆記] 什麼是 Kubernetes？'
+date: '2025-09-12'
+tags: ['Kubernetes', 'DevOps', 'Cloud']
+draft: false
+summary: '本文深入探討 Kubernetes 的核心概念，說明其作為容器編排系統的角色與價值，並詳細介紹集群的兩大組成部分：控制平面與工作節點'
+---
+
+# 什麼是 Kubernetes？
+
+在上一篇文章中，我們了解了為什麼需要容器編排工具，而 Kubernetes（K8s）正是這個領域的王者。那麼，到底什麼是 Kubernetes？
+
+簡而言之，**Kubernetes 是一個開源的容器編排系統，用於自動化應用程式的部署、擴展和管理。** 它最初由 Google 設計，並在 2014 年開源，目前由雲原生計算基金會（Cloud Native Computing Foundation, CNCF）維護。
+
+你可以把 Kubernetes 想像成一個龐大的自動化「機器人」，它控制著一個由多台伺服器組成的「集群」（Cluster）。你只需要告訴這個機器人你想要執行的應用程式狀態（例如：我想要執行 3 個 NGINX 容器），K8s 就會想盡辦法讓你的願望成真，並持續監控，確保應用程式保持在這個狀態。
+
+# Kubernetes 的核心架構
+
+一個 Kubernetes 集群主要由兩種核心節點組成：
+
+## 1. Control Plane（控制平面）
+
+**Control Plane** 是 Kubernetes 的「大腦」或「總指揮中心」。它負責管理整個集群的運作，包含所有決策和協調工作。它由以下幾個關鍵元件組成：
+
+> [!CAUTION]
+> Control Plane 是一組「邏輯元件」，而 Control Plane Node（以前叫 Master Node）則是實際執行這些元件的伺服器。
+>
+> 在 Production 中，通常會有多個 Control Plane Nodes 組成高可用的 Control Plane。
+
+### kube-apiserver
+
+- 這是 Kubernetes 的核心入口，管理整個 Kubernetes 所需要的 API endpoint。
+- 所有對 Kubernetes 的操作（部署、查詢狀態等）都透過 API Server。
+- 它是 Node 與 Control Plane 溝通的唯一入口。
+
+### etcd
+
+- etcd 是 highly-available key-value store system，用於 **持久化** 儲存集群的所有狀態、配置資料和元資料。
+- etcd 保存叢集的所有狀態，因此可以用它來進行叢集恢復與備份。。
+
+> [!CAUTION]
+> 在 Production 中，etcd 的備份策略非常重要，否則可能造成集群無法恢復。
+
+### kube-controller-manager
+
+- 這是一個由多個控制器組成的元件，負責監控集群的狀態，並確保實際狀態與你期望的狀態一致。
+- 它就像是 K8s 的巡邏員，一旦發現有容器故障或數量不足，就會立即採取行動。
+
+### kube-scheduler
+
+- kube-scheduler 是整個 k8s 的 Pods 調度員。它會考慮資源需求、節點限制...等因素，來決定 Pod 應該放在哪一個 Node。
+
+## 2. Worker Node（工作節點）
+
+Worker Node 是 Kubernetes cluster 中真正執行應用程式容器的地方。一個 cluster 可以有一個或多個 worker node。
+
+每個 Worker Node 都包含以下幾個核心元件：
+
+### kubelet
+
+這是執行在每個工作節點上的代理程式。它負責與控制平面通訊，接收 API 伺服器發出的指令，並確保節點上的容器狀態與指令一致。Kubelet 是「命令的執行者」。
+
+### Container Runtime
+
+這就是真正執行和管理容器的軟體，例如 Docker、containerd 等。它是「實際的工人」。
+
+### kube-proxy
+
+- kube-proxy 負責維護 Node 上的網路規則，實現服務發現（Service discovery）和負載平衡（Load balancing）。
+- 它就像是節點內的「交通警察」，確保容器之間的流量能正確流通。
+
+# 小結
+
+- Control Plane = 大腦，Worker Node = 手腳。
+- Control Plane 負責決策與協調，Worker Node 則負責執行容器工作。
+- 兩者透過 kubelet 與 API Server 溝通，形成一個自動化、自我修復的容器平台。
