@@ -1,0 +1,182 @@
+---
+title: '[演算法筆記] Monotonic Stack & Queue 單調棧與單調佇列'
+date: '2025-09-16'
+summary: '整理 Monotonic Stack 與 Monotonic Queue 的核心概念、常見題型與模板，幫助快速複習與面試實戰。'
+tags: ['Algorithm']
+---
+
+# 前言
+
+在演算法面試中，**Monotonic Stack（單調棧）** 與 **Monotonic Queue（單調佇列）** 是非常常見的技巧。  
+這類結構的重點在於：透過維持單調性（Monotonic），能將某些 **暴力 O(n²)** 的問題優化為 **O(n)**。
+
+例如：
+
+- **Next Greater Element**：直接雙迴圈找右邊較大元素是 O(n²)，但用單調棧可 O(n) 解決
+- **Sliding Window Maximum**：每次重算最大值是 O(nk)，單調佇列可降為 O(n)
+
+典型應用包括 **Next Greater Element, Daily Temperatures, Sliding Window Maximum, Histogram**。
+
+---
+
+# 核心概念
+
+## 1. Monotonic Stack
+
+- 維持一個單調序列遞增或遞減的 **Stack**。
+- 常見用法：
+  - **單調遞減棧**：解決「下一個更大元素」問題
+  - **單調遞增棧**：解決「下一個更小元素」問題
+
+時間複雜度：**O(n)**（每個元素最多進/出 stack一次）
+
+**範例：Next Greater Element 的過程**
+
+```text
+nums = [2, 1, 4, 3]
+
+Stack 過程 (存 index)：
+i=0, num=2 → push(0) → [2]
+i=1, num=1 → push(1) → [2,1]
+i=2, num=4 → pop(1), pop(0)，4 是它們的下一個更大元素
+             push(2) → [4]
+i=3, num=3 → push(3) → [4,3]
+```
+
+---
+
+## 2. Monotonic Queue
+
+- 使用 **Deque** 維持單調性，常用於 **Sliding Window 最大/最小值**。
+- 保證佇列頭部永遠是當前窗口的最大/最小值。
+
+時間複雜度：**O(n)**（每個元素最多進出 deque 一次）
+
+> [!NOTE]
+> Deque 是雙向佇列，與 Queue 不同。Deque 可以允許在頭、尾兩端去進行插入和刪除操作
+
+---
+
+# 常見題型與模板
+
+## 1. Next Greater Element
+
+題目：找出陣列中每個元素右邊的下一個更大元素。
+
+```python
+def next_greater_elements(nums):
+    n = len(nums)
+    res = [-1] * n
+    stack = []
+    for i in range(2 * n):  # circular array
+        num = nums[i % n]
+        while stack and nums[stack[-1]] < num:
+            idx = stack.pop()
+            res[idx] = num
+        if i < n:
+            stack.append(i)
+    return res
+```
+
+---
+
+## 2. Daily Temperatures
+
+題目：計算要等多少天才能遇到更高溫度。
+
+```python
+def daily_temperatures(temps):
+    n = len(temps)
+    res = [0] * n
+    stack = []
+    for i, t in enumerate(temps):
+        while stack and t > temps[stack[-1]]:
+            idx = stack.pop()
+            res[idx] = i - idx
+        stack.append(i)
+    return res
+```
+
+---
+
+## 3. Largest Rectangle in Histogram
+
+題目：計算直方圖最大矩形面積。
+
+```python
+def largest_rectangle_area(heights):
+    n = len(heights)
+    stack = []
+    max_area = 0
+    for i in range(n + 1):
+        h = 0 if i == n else heights[i]
+        while stack and h < heights[stack[-1]]:
+            height = heights[stack.pop()]
+            width = i if not stack else i - stack[-1] - 1
+            max_area = max(max_area, height * width)
+        stack.append(i)
+    return max_area
+```
+
+---
+
+## 4. Sliding Window Maximum (Monotonic Queue)
+
+題目：計算每個大小為 `k` 的窗口中的最大值。
+
+```python
+from collections import deque
+
+def max_sliding_window(nums, k):
+    n = len(nums)
+    res = []
+    dq = deque()
+    for i, num in enumerate(nums):
+        while dq and dq[0] <= i - k:
+            dq.popleft()
+        while dq and nums[dq[-1]] < num:
+            dq.pop()
+        dq.append(i)
+        if i >= k - 1:
+            res.append(nums[dq[0]])
+    return res
+```
+
+---
+
+# 解題技巧
+
+1. **Monotonic Stack**
+   - 適合「下一個更大/更小」類型問題
+   - 常用「哨兵元素」處理邊界（如 Histogram）
+2. **Monotonic Queue**
+   - 適合「Sliding Window」類型問題
+3. 模板化思路：
+   1. for-loop 掃描
+   2. 維護單調性 (while pop)
+   3. 當條件符合時記錄答案
+
+---
+
+# 常見延伸題
+
+- Trapping Rain Water（Two Pointers / Monotonic Stack）
+- Online Stock Span（Monotonic Stack）
+- Maximal Rectangle（轉換成多次 Histogram）
+- Sliding Window Minimum（Monotonic Queue）
+
+---
+
+# 參考 Leetcode 題目
+
+| 題目名稱                       | 題號      | 類型                           |
+| ------------------------------ | --------- | ------------------------------ |
+| Next Greater Element I         | 496       | Monotonic Stack                |
+| Next Greater Element II        | 503       | Monotonic Stack (Circular)     |
+| Daily Temperatures             | 739       | Monotonic Stack                |
+| Largest Rectangle in Histogram | 84        | Monotonic Stack                |
+| Maximal Rectangle              | 85        | Monotonic Stack + DP           |
+| Sliding Window Maximum         | 239       | Monotonic Queue                |
+| Trapping Rain Water            | 42        | Monotonic Stack / Two Pointers |
+| Online Stock Span              | 901       | Monotonic Stack                |
+| Sliding Window Minimum         | 239 / 155 | Monotonic Queue                |

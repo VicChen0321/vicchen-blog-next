@@ -1,11 +1,11 @@
 {
+  "algorithm": 4,
   "kubernetes": 2,
   "devops": 2,
   "cloud": 2,
   "design-pattern": 1,
   "python": 10,
   "system-design": 1,
-  "algorithm": 3,
   "life": 1,
   "movie": 1,
   "thymeleaf": 2,
