@@ -1,0 +1,122 @@
+---
+title: '[演算法筆記] GCD 與 LCM 最大公因數與最小公倍數'
+date: '2025-09-17'
+summary: '整理 GCD（最大公因數）與 LCM（最小公倍數）的定義、演算法、程式碼模板與 Leetcode 題目，協助快速複習與面試應用。'
+tags: ['Algorithm', 'Math']
+---
+
+# 前言
+
+在演算法與系統設計面試中，**最大公因數（GCD）** 與 **最小公倍數（LCM）** 是基礎數學問題，卻有非常多延伸應用。  
+除了常見的數論題外，GCD/LCM 也經常出現在 **排程問題、分散式系統設計、加密演算法** 中。
+
+---
+
+# 核心概念
+
+## 1. 最大公因數（Greatest Common Divisor, GCD）
+
+最大公因數（Greatest Common Divisor，GCD），指某幾個整數共有因數中最大的一個。
+
+**定義：** 能同時整除 `a` 與 `b` 的最大整數。
+
+**數學公式：**
+
+$$
+\gcd(a, b) = \gcd(b, a \bmod b)
+$$
+
+**方法：**
+
+- 歐幾里得演算法（Euclidean Algorithm）又叫輾轉相除法
+
+**實作方式：**
+
+```java
+int gcd(int a, int b) {
+    return b == 0 ? a : gcd(b, a % b);
+}
+```
+
+> [!TIP]
+> Python 可以直接用函式庫 `from math import lcm`
+
+- 時間複雜度：$O(\log(\min(a, b)))$
+- 每次迭代將問題縮小，直到餘數為 0
+
+---
+
+## 2. 最小公倍數（Least Common Multiple, LCM）
+
+最小公倍數是數論中的一個概念。若一個數 `x` 能被另外兩個數 `a`, `b` 整除，且 `x >= a, b` 則 `x` 為 `a` 和 `b` 的公倍數。
+`a` 和 `b` 的公倍數可以有無數個，其中最小的稱之為最小公倍數。
+
+**定義：** 能同時被 `a` 與 `b` 整除的最小正整數。
+
+**數學公式：**
+
+$$
+\text{lcm}(a, b) = \frac{|a \times b|}{\gcd(a, b)}
+$$
+
+**實作方式：**
+
+```java
+int lcm(int a, int b) {
+    return a / gcd(a, b) * b;
+}
+```
+
+> [!IMPORTANT]
+> 乘法可能造成整數溢位（overflow），實作時常用先除後乘： `a / gcd(a,b) * b`（注意順序與正負號）。
+> 若數字可能為負數，需加上絕對值。
+
+> [!TIP]
+> Python 可以直接用函式庫 `from math import lcm`
+
+- 時間複雜度：$O(\log(\min(a, b)))$
+
+---
+
+# 常見題型與範例
+
+## 1. 陣列 GCD / LCM
+
+題目：給定一個整數陣列，找出所有數字的 GCD。
+
+```python
+from math import gcd
+from functools import reduce
+
+def array_gcd(nums):
+    return reduce(gcd, nums)
+```
+
+---
+
+## 2. 水壺問題（Leetcode 365. Water and Jug Problem）
+
+題目：判斷能否用兩個水壺量出 `target` 升水。
+核心：若 `target % gcd(x, y) == 0`，則可解。
+
+```python
+from math import gcd
+
+def can_measure_water(x, y, target):
+    return target == 0 or (x + y >= target and target % gcd(x, y) == 0)
+```
+
+---
+
+## 3. 排程週期問題
+
+若機器 `A` 每 `a` 秒執行一次，機器 `B` 每 `b` 秒執行一次，
+那麼兩者同時執行的時間點為 `LCM(a, b)`。
+
+---
+
+# 解題技巧
+
+- 善用 GCD/LCM 關係：`lcm(a, b) = a * b // gcd(a, b)`
+- 水壺 / 排程類問題 幾乎都會考到 GCD/LCM
+- 大數處理：注意避免整數溢位，先除後乘
