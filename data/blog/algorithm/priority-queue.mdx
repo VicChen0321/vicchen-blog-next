@@ -1,0 +1,143 @@
+---
+title: '[演算法筆記] Priority Queue 優先佇列'
+date: '2025-09-22'
+summary: '整理 Priority Queue（優先佇列）的定義、實作方式、典型應用與 Leetcode 題目，協助快速複習與面試應用。'
+tags: ['Algorithm', 'Data Structure']
+---
+
+# 前言
+
+**Priority Queue（優先佇列）** 是一種特殊的佇列，取出元素時不是依照「先進先出」，  
+而是依照元素的「優先權（priority）」來決定順序。
+
+常見應用：
+
+- **作業系統**：任務排程（CPU Scheduling）
+- **演算法**：Dijkstra、Prim、Huffman 編碼
+- **實務應用**：訊息佇列、事件處理、Top-K 問題
+
+---
+
+# 核心概念
+
+- 普通佇列：FIFO（First In, First Out）
+- 優先佇列：根據 **比較器（Comparator）** 決定取出順序
+- 通常由 **Heap（二元堆）** 實作，插入與取出時間複雜度為 $O(\log n)$
+
+---
+
+# 常見實作方式
+
+## 1. Binary Heap
+
+最常見的實作，維護一棵「完全二元樹」：
+
+- **Min-Heap**：根節點最小
+- **Max-Heap**：根節點最大
+
+操作：
+
+- 插入（push）：$O(\log n)$
+- 取出最大/最小（pop）：$O(\log n)$
+- 取頂（peek）：$O(1)$
+
+---
+
+## 2. 其他實作
+
+- **Balanced BST**（如 Red-Black Tree）
+- **Fibonacci Heap**（在某些演算法有更好理論性能）
+- **內建函式庫**：
+  - Java: `PriorityQueue<E>`
+  - Python: `heapq`
+
+---
+
+# 程式碼範例
+
+## Python: heapq
+
+```python
+import heapq
+
+nums = [5, 3, 8, 1]
+heapq.heapify(nums)  # create min-heap
+
+heapq.heappush(nums, 2)  # insert element
+print(heapq.heappop(nums))  # poll min element
+```
+
+> [!TIP]
+> Python heapq 預設是最小堆，如果要建立最大堆，可以存入負數：`heapq.heappush(nums, -val)`，取出時記得再轉回正值
+
+---
+
+## Java: PriorityQueue
+
+```java
+import java.util.*;
+
+public class PQExample {
+    public static void main(String[] args) {
+        PriorityQueue<Integer> pq = new PriorityQueue<>(); // min-heap
+        pq.add(5);
+        pq.add(1);
+        pq.add(8);
+
+        System.out.println(pq.poll()); // 1
+        System.out.println(pq.peek()); // 5
+    }
+}
+```
+
+> [!TIP]
+> Java 預設是最小堆，如果要用最大堆的方式，可以在實作 `Comparator`
+
+---
+
+# 常見題型
+
+1. Top-K 問題
+   - Leetcode 347. Top K Frequent Elements
+   - 用最小堆維持大小為 K 的集合
+2. 合併 K 個排序鏈表
+   - Leetcode 23. Merge k Sorted Lists
+   - 每次取出當前最小節點
+3. Dijkstra 最短路徑
+   - 使用最小堆維護當前最短距離
+4. Huffman 編碼
+   - 用最小堆合併節點生成最優編碼樹
+
+---
+
+# 複雜度分析
+
+| 操作         | Binary Heap | Balanced BST |
+| ------------ | ----------- | ------------ |
+| 插入（push） | $O(\log n)$ | $O(\log n)$  |
+| 取出（pop）  | $O(\log n)$ | $O(\log n)$  |
+| 取頂（peek） | $O(1)$      | $O(1)$       |
+
+> [!NOTE]
+> 因為在每次插入、取出的時候，都需要維持 sorted，所以會需要額外時間去維護
+
+---
+
+# 解題技巧
+
+- **尋找第 K 小/大問題：** 維護大小為 `K` 的 heap
+- **排程/模擬：** 用優先佇列維護下一個要處理的事件
+- **圖論最短路徑：** Dijkstra 幾乎必考
+
+---
+
+# 參考 Leetcode 題目
+
+| 題目名稱                     | 題號 | 類型      |
+| ---------------------------- | ---- | --------- |
+| Top K Frequent Elements      | 347  | Top-K     |
+| Kth Largest Element          | 215  | Top-K     |
+| Merge k Sorted Lists         | 23   | 多路合併  |
+| Find Median from Data Stream | 295  | 雙堆結構  |
+| Dijkstra Shortest Path       | N/A  | 圖論      |
+| Huffman Coding               | N/A  | 壓縮/編碼 |
