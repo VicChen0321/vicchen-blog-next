@@ -1,5 +1,10 @@
 {
-  "algorithm": 5,
+  "jq": 1,
+  "json": 1,
+  "cli": 1,
+  "linux": 1,
+  "algorithm": 6,
+  "data-structure": 1,
   "math": 1,
   "kubernetes": 2,
   "devops": 2,

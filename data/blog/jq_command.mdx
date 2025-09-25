@@ -1,0 +1,338 @@
+---
+title: '[Linux] jq 指令教學：JSON Command Line 工具'
+date: '2025-09-25'
+tags: ['jq', 'json', 'cli', 'linux']
+draft: true
+summary: '使用 jq 快速處理 JSON：壓縮、拆陣列、生成單行物件，提升開發與資料分析效率'
+---
+
+## 前言
+
+在現代開發中，JSON 幾乎無處不在：API 回傳、設定檔、日誌資料……等，雖然大部分程式語言都提供 JSON 解析方式，但有時候你只想用命令列快速處理資料。這時候，`jq` 就非常好用。
+本文將介紹一些常見的 `jq` 使用技巧，包括 **JSON 壓縮、陣列處理，以及生成單行 JSON 物件**。
+
+---
+
+## 安裝 jq
+
+先確認你有安裝了 `jq`：
+
+```bash
+## macOS
+brew install jq
+
+## Ubuntu/Debian:
+sudo apt-get update
+sudo apt-get install jq
+
+## CentOS/Red Hat:
+sudo yum install jq
+```
+
+測試安裝：
+
+```bash
+jq --version
+```
+
+---
+
+## 基本用法
+
+原始亂亂的資料：
+
+```json:input.json
+{"name": "Vic",
+"age": 18}
+```
+
+### 將 JSON 美化輸出：
+
+```bash
+cat input.json | jq '.'
+{
+  "name": "Vic",
+  "age": 18
+}
+
+# 或者 jq '.' input.json
+```
+
+### 將 JSON 壓縮輸出：（去除多餘空白和換行）
+
+```bash
+cat input.json | jq -c '.'
+{"name":"Vic","age":18}
+
+# 或者 jq -c '.' input.json
+```
+
+- `-c`：compact，壓縮輸出：
+- `.`：identity filter，保持元結構
+
+---
+
+## 序列化和反序列化（Serialization and Deserialization）
+
+- `-R`：將 JSON 格式轉成可以傳輸的字串
+- `-r`：將 字串格式轉回 JSON 格式
+
+### 序列化：將 JSON 轉為字串
+
+```json:input.json
+{
+  "name": "Vic",
+  "age": 18,
+  "skills": [
+    "Java",
+    "jq"
+  ]
+}
+```
+
+執行：
+
+```bash
+jq -R . input.json
+```
+
+輸出：
+
+```json
+"{\"name\":\"Vic\",\"age\":18,\"skills\":[\"Java\",\"jq\"]}"
+```
+
+### 反序列化：將字串轉回 JSON
+
+執行：
+
+```bash
+echo "{\"name\":\"Vic\",\"age\":18,\"skills\":[\"Java\",\"jq\"]}" | jq -r .
+```
+
+輸出：
+
+```json
+{
+  "name": "Vic",
+  "age": 18,
+  "skills": ["Java", "jq"],
+  "location": {
+    "country": "Taiwan",
+    "city": "Taipei"
+  }
+}
+```
+
+---
+
+## 取出特定欄位值
+
+```json:input.json
+{
+    "name": "Vic",
+    "age": 18,
+    "skills": ["Java", "TypeScript"]
+}
+```
+
+### 取得某一個 key 值
+
+執行：
+
+```bash
+cat input.json | jq .name # 或者 cat input.json | jq '.["name"]'
+```
+
+輸出：
+
+```bash
+"Vic"
+```
+
+> [!NOTE]
+> 如果值不存在，或者 value 是 null 都會回 null
+
+### 取得多個 key 值
+
+執行：
+
+```bash
+cat input.json | jq '.name, .age, .skills'
+```
+
+輸出：
+
+```
+"Vic"
+18
+[
+  "Java",
+  "TypeScript"
+]
+```
+
+### 取出第二層以上的值
+
+執行：
+
+```bash
+cat input.json | jq .location.country
+```
+
+輸出：
+
+```bash
+"Taiwan"
+```
+
+## 過濾 JSON Object 保留特定欄位
+
+執行：
+
+```bash
+cat input.json | jq '{name, location}'
+```
+
+輸出：
+
+```json
+{
+  "name": "Vic",
+  "location": {
+    "country": "Taiwan",
+    "city": "Taipei"
+  }
+}
+```
+
+## 取得第一層所有 key
+
+執行：
+
+```bash
+cat input.json | jq keys
+```
+
+輸出：
+
+```
+[
+  "age",
+  "location",
+  "name",
+  "skills"
+]
+```
+
+> 如果資料是 Array，key 就會只是序號而已
+
+## 陣列操作
+
+```json:input.json
+[
+    {"name": "name1","age": 10},
+    {"name": "name2","age": 20},
+    {"name": "name3","age": 30},
+    {"name": "name4","age": 40}
+]
+```
+
+### 截取單一 Element
+
+執行：
+
+```bash
+cat input.json | jq '.[1]'
+```
+
+輸出：
+
+```json
+{
+  "name": "name2",
+  "age": 20
+}
+```
+
+> 不存在就會回 null
+
+### 截取多個 Elements
+
+指定某幾個 index
+執行：
+
+```bash
+cat input.json | jq '.[1,3]'
+```
+
+輸出：
+
+```json
+{
+  "name": "name2",
+  "age": 20
+}
+{
+  "name": "name4",
+  "age": 40
+}
+```
+
+指定範圍
+執行：
+
+```bash
+cat input.json | jq '.[0:2]' # 不會包含 element[2]
+```
+
+輸出：
+
+```json
+[
+  {
+    "name": "name1",
+    "age": 10
+  },
+  {
+    "name": "name2",
+    "age": 20
+  }
+]
+```
+
+> [!IMPORTANT]
+> 指定範圍方式，其結果會用陣列包起來
+
+### 印出所有元素
+
+執行：
+
+```bash
+cat input.json | jq '.[]'
+```
+
+輸出：
+
+```json
+{
+  "name": "name1",
+  "age": 10
+}
+{
+  "name": "name2",
+  "age": 20
+}
+{
+  "name": "name3",
+  "age": 30
+}
+{
+  "name": "name4",
+  "age": 40
+}
+```
+
+## 結論
+
+`jq` 是一個很方便的工具，掌握使用技巧的話，可以幫助你去整理 JSON 檔案，以及截取元素做分析、計算...等
