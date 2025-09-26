@@ -1,0 +1,111 @@
+---
+title: '[演算法筆記] Kadane’s Algorithm（卡丹算法）'
+date: '2025-09-26'
+summary: '整理 Kadane’s Algorithm（最大子陣列和演算法）的核心概念、程式碼實作、常見題型與 Leetcode 範例，協助快速複習與面試應用。'
+tags: ['Algorithm', 'Dynamic Programming']
+---
+
+# 前言
+
+**Kadane’s Algorithm（卡丹算法）** 是一個經典演算法，用來解決 **Maximum Subarray Problem（最大子陣列和問題）**。  
+給定一個整數陣列，演算法能夠在 $O(n)$ 的時間內找到最大子陣列的總和。
+
+這個演算法非常常見於 **動態規劃** 題目，也是 Leetcode、面試中高頻出現的基礎題型。
+
+---
+
+# 核心概念
+
+**Kadane’s Algorithm** 的想法是：
+
+- 對於每個位置 `i`，維護一個當前的最大子陣列和 `currentMax`
+- 判斷是否要「延續前面的子陣列」還是「重新開始一個新的子陣列」
+- 使用全域變數 `globalMax` 紀錄目前為止的最大值
+
+遞推公式：
+
+- $currentMax = \max(nums[i],\ currentMax + nums[i])$
+- $globalMax = \max(globalMax,\ currentMax)$
+
+---
+
+# 程式碼範例
+
+## Python
+
+```python
+def maxSubArray(nums):
+    currentMax = globalMax = nums[0]
+    for i in range(nums[1:]):
+        currentMax = max(nums[i], currentMax + nums[i])
+        globalMax = max(globalMax, currentMax)
+    return globalMax
+```
+
+---
+
+## Java
+
+```java
+class Solution {
+    public int maxSubArray(int[] nums) {
+        int currentMax = nums[0];
+        int globalMax = nums[0];
+        for (int i = 1; i < nums.length; i++) {
+            currentMax = Math.max(nums[i], currentMax + nums[i]);
+            globalMax = Math.max(globalMax, currentMax);
+        }
+        return globalMax;
+    }
+}
+```
+
+---
+
+# 複雜度分析
+
+- 時間複雜度：$O(n)$，僅需一次迭代
+- 空間複雜度：$O(1)$，只需常數額外空間
+  > [!NOTE]
+  > Kadane’s Algorithm 的關鍵在於「局部最佳帶來全域最佳」，透過動態規劃的方式避免重複計算。
+
+---
+
+# 常見題型
+
+### 1. 最大子陣列和
+
+- Leetcode 53. Maximum Subarray
+- 經典題型，Kadane’s Algorithm 直接套用
+
+### 2. 環狀陣列最大子陣列和
+
+- Leetcode 918. Maximum Sum Circular Subarray
+- 額外需要考慮「環狀」的情況，解法為：
+  - 最大子陣列和（Kadane’s）
+  - 總和減去最小子陣列和（另一個 Kadane’s 變形）
+
+### 3. 動態規劃延伸
+
+- 最大子矩陣和（2D 版 Kadane’s）
+- 股票買賣問題可視為變形
+
+---
+
+# 解題技巧
+
+- 單純最大子陣列和 → 套 Kadane’s
+- 環狀陣列 → 最大值在「中間段」或「頭尾連接段」
+- 2D 版本 → 固定上下邊界，對每一列進行 Kadane’s
+- 面試建議 → 先寫出簡單 Kadane’s，再依題目需求做延伸
+
+---
+
+# 參考 Leetcode 題目
+
+| 題目名稱                          | 題號 | 類型             |
+| --------------------------------- | ---- | ---------------- |
+| Maximum Subarray                  | 53   | 基礎 Kadane’s    |
+| Maximum Sum Circular Subarray     | 918  | 環狀陣列         |
+| Maximum Sum Rectangle (in 2D)     | N/A  | 二維 Kadane’s    |
+| Best Time to Buy and Sell Stock I | 121  | 股票變形（差分） |
