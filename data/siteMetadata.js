@@ -1,9 +1,9 @@
 /** @type {import("pliny/config").PlinyConfig } */
 const siteMetadata = {
-  title: 'Vic Chen 軟體工程師成長部落格',
+  title: 'Vic Chen Dev',
   author: 'Vic Chen',
-  headerTitle: 'VicChen | Blog',
-  description: 'Vic Chen 官方部落格 | 分享程式教學、學習筆記...等內容',
+  headerTitle: 'Vic Chen Dev',
+  description: '',
   language: 'zh-TW',
   locale: 'en-US', // For date time using
   theme: 'system', // system, dark or light
