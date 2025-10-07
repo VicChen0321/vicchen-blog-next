@@ -1,0 +1,261 @@
+---
+title: '[Spring 筆記] AOP 與代理機制：JDK Dynamic Proxy vs CGLIB'
+date: '2025-10-07'
+tags: ['Spring', 'AOP']
+draft: false
+summary: '整理 Spring AOP 的代理原理、JDK 與 CGLIB 的差異、self-invocation 陷阱，以及為什麼 @Transactional、@Retryable 常常失效。'
+---
+
+## 前言
+
+在開發 Spring 專案時，幾乎每個人都用過 `@Transactional`、`@Retryable` 或 `@Async`。
+但你可能遇過這種狀況：
+
+- 明明加了 `@Transactional`，卻沒有 rollback。
+- `@Retryable` 根本沒重試。
+- `@Async` 方法照樣同步執行。
+
+這通常不是 Spring 壞掉，而是因為你 **誤用了 AOP 代理機制（Proxying Mechanism）**。
+
+---
+
+## Spring AOP 的本質：代理（Proxy）
+
+Spring 的 AOP 並不是修改原始程式碼或 bytecode，而是 **透過代理（Proxy）** 包裝原本的 Bean。
+
+也就是說，當你注入一個加了 `@Transactional` 的 Bean 時，你拿到的不是原始類別，而是代理對象。
+
+```
+@Service
+public class OrderService {
+
+    @Transactional
+    public void createOrder() {
+        // 這段程式會在代理的包裝下執行
+    }
+}
+```
+
+Spring 會在啟動的初始化階段時，掃描建立 Bean 定義，用 Proxy 包住 `OrderService`，在方法執行前後注入攔截邏輯（Advice）。
+
+> [!NOTE]
+> 在啟動後 ，實際上得到的是一個 runtime 時生成的 subclass：`com.example.OrderService$$EnhancerBySpringCGLIB$$9a0f3a`
+>
+> 這個類別在 JVM 執行時，透過 CGLIB bytecode manipulation 動態生成，只存在於記憶體中，不會被編譯成 `.class` 檔存在硬碟上。
+> CGLIB 代理是透過 ASM 操作 bytecode，在 JVM runtime 時產生 subclass，載入至 Enhancer 產生的 ClassLoader，不會寫入檔案系統。
+
+---
+
+## Proxy 的兩種機制
+
+Spring 主要有兩種代理實作：
+
+| 類型                  | 使用條件        | 實作方式             | 限制                             |
+| --------------------- | --------------- | -------------------- | -------------------------------- |
+| **JDK Dynamic Proxy** | Bean 有實作介面 | 實作該介面的代理類別 | 只能代理介面方法                 |
+| **CGLIB Proxy**       | Bean 沒有介面   | 繼承原類別產生子類別 | 無法代理 `final`、`private` 方法 |
+
+預設行為：
+
+- 如果 Bean **有介面** → 使用 **JDK Proxy**
+- 沒有介面 → 使用 **CGLIB**
+
+你也可以強制使用 CGLIB：
+
+```
+spring:
+  aop:
+    proxy-target-class: true
+```
+
+---
+
+## 示意圖：JDK vs CGLIB
+
+<Mermaid chart={`
+graph TD
+  A[Client] -->|呼叫介面方法| P[JDK Dynamic Proxy]
+  P -->|轉發呼叫| T[Target Bean]
+
+A2[Client] -->|呼叫繼承方法| C[CGLIB Proxy]
+C -->|super 呼叫| T2[Target Bean]
+`}/>
+
+- **JDK Proxy** 會生成一個實作相同介面的類別，攔截介面方法呼叫。
+- **CGLIB** 會生成一個繼承原類別的子類別，透過 method interceptor 注入切面邏輯。
+
+---
+
+## 常見陷阱 1：Self Invocation（自我呼叫）
+
+```java:UserService.java
+@Service
+public class UserService {
+
+    @Transactional
+    public void createUser() {
+        saveUser();
+    }
+
+    @Transactional
+    public void saveUser() {
+        // ...
+    }
+}
+```
+
+這樣寫，`saveUser()` 的 transaction **不會生效**。
+
+### 為什麼？
+
+因為代理只包在最外層呼叫上。  
+當你在同一個物件內呼叫自己的方法（`this.saveUser()`），Spring AOP 完全不會攔截。
+
+<Mermaid chart={`
+sequenceDiagram
+participant C as Client
+participant P as Proxy(UserService)
+participant T as Target(UserService)
+
+C->>P: createUser()
+P->>T: createUser()
+T->>T: saveUser() (self-invocation, no proxy)
+`}/>
+
+### 解法：
+
+1. **將方法拆分成不同 Bean**
+
+   ```java
+   @Service
+   public class UserService {
+       @Autowired private UserHelper helper;
+
+       @Transactional
+       public void createUser() {
+           helper.saveUser();
+       }
+   }
+
+   @Service
+   public class UserHelper {
+       @Transactional
+       public void saveUser() { ... }
+   }
+   ```
+
+   > [!Note]
+   > 這是 Spring 官方最建議的解法，這方法侵入性較小
+
+2. 自我注入呼叫
+
+```java
+@Service
+public class UserService {
+
+    @Lazy
+    @Autowired
+    private final UserService userService;
+
+    @Transactional
+    public void createUser() {
+        userService.saveUser(); // 自我注入呼叫
+    }
+
+    @Transactional
+    public void saveUser() {
+        // ...
+    }
+}
+```
+
+> [!IMPORTANT]
+> 自我注入記得要加上 `@Lazy` 去避免循環依賴（Circular Dependencies）
+
+3. **從 Proxy 取得自己再呼叫**
+
+   ```java
+   ((UserService) AopContext.currentProxy()).saveUser();
+   ```
+
+   ⚠️ 需在設定檔中啟用：
+
+   ```java
+   @EnableAspectJAutoProxy(exposeProxy = true)
+   ```
+
+> [!Warning]
+> 這是 Spring 官方最不推薦的解法，這方法會使程式碼跟 Spring AOP 過於耦合
+
+---
+
+## 常見陷阱 2：Private / Final 方法
+
+CGLIB 是靠「繼承」來實現代理，而 JDK Proxy 是依靠介面，只能攔截介面方法來實現代理  
+所以 priate, final 都無法被代理
+
+```java
+@Service
+public class OrderService {
+
+    @Transactional
+    private void saveOrder() {} // ❌ 無效
+
+    @Transactional
+    public final void commit() {} // ❌ 無效
+}
+```
+
+`@Transactional`、`@Retryable`、`@Async` 都不會作用。
+
+**解法：**
+
+- 方法必須是 **public 或 protected**
+- 類別不可是 **final class**
+- 避免使用 **private/final 方法作為切點**
+
+---
+
+## 常見陷阱 3：呼叫時機錯誤
+
+AOP 代理只會在 Spring 完成 Bean 初始化後生效。  
+因此在 `@PostConstruct`、建構子或 `@Bean` 方法內呼叫代理方法，都不會觸發 AOP。
+
+```java
+@PostConstruct
+public void init() {
+    doSomething(); // ❌ AOP 尚未初始化
+}
+```
+
+---
+
+## 小結：JDK vs CGLIB 比較
+
+| 項目                          | JDK Proxy                     | CGLIB              |
+| ----------------------------- | ----------------------------- | ------------------ |
+| 實作方式                      | 實作介面                      | 繼承類別           |
+| 是否需要介面                  | ✅ 是                         | ❌ 否              |
+| 是否能代理 private/final 方法 | ❌ 否                         | ❌ 否              |
+| 效能                          | 稍快                          | 稍慢（但差距不大） |
+| Spring 預設策略               | 有介面用 JDK                  | 無介面用 CGLIB     |
+| 可否強制使用                  | ✅ `proxy-target-class: true` | ✅ 自動 fallback   |
+
+---
+
+## 總結
+
+Spring AOP 是透過「代理模式」包裝原始 Bean。  
+這帶來了靈活的切面機制，也導致不少「方法沒生效」的誤會。
+
+**重點整理：**
+
+1. `@Transactional`、`@Retryable`、`@Async` 都是靠 AOP 實現的。
+2. 代理機制分為 **JDK Dynamic Proxy** 和 **CGLIB**。
+3. **self-invocation、private、final、建構子時機** 都會讓 AOP 失效。
+
+---
+
+## 延伸閱讀
+
+- [Spring 官方文件：AOP Proxying Mechanisms](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html)
