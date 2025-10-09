@@ -1,0 +1,275 @@
+---
+title: '[Go 學習系列] 5. Package 與可見性：理解模組化程式結構'
+date: '2025-09-19'
+summary: '學習 Go 的 package 結構與可見性規則，了解如何組織模組、匯入套件與建立可重用的程式。'
+tags: ['Go', 'Go-Learning']
+---
+
+# 前言
+
+在上一章，我們學會了控制流程與函數。  
+這一章要談的是 Go 的模組化基礎：**package（封包）與可見性（visibility）**。
+
+---
+
+# Package 是什麼？
+
+在 Go 裡，每個 `.go` 檔案都要宣告一個 `package`。  
+它代表「這個檔案屬於哪個模組」。
+
+```
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello from main!")
+}
+```
+
+---
+
+## 為什麼需要 package？
+
+Package 幫助我們：
+
+- 拆分程式邏輯
+- 重複使用程式碼
+- 管理命名空間，避免名稱衝突
+
+例如，我們可以把「數學邏輯」放在 `mathutil` 封包裡，  
+主程式只要匯入即可使用。
+
+---
+
+# 建立自訂 package
+
+建立一個新資料夾 `mathutil`，裡面放入檔案 `mathutil.go`：
+
+```
+📁 project/
+ ┣ 📄 main.go
+ ┗ 📁 mathutil/
+     ┗ 📄 mathutil.go
+```
+
+### mathutil/mathutil.go
+
+```go:mathutil.go
+package mathutil
+
+func Add(a, b int) int {
+    return a + b
+}
+```
+
+### main.go
+
+```go:main.go
+package main
+
+import (
+    "fmt"
+    "project/mathutil"
+)
+
+func main() {
+    sum := mathutil.Add(3, 5)
+    fmt.Println("結果:", sum)
+}
+```
+
+執行結果：
+
+```
+結果: 8
+```
+
+---
+
+# 可見性（Visibility）規則
+
+在 Go 中，**首字母大小寫** 就決定了變數或函數是否「可被外部使用」。
+
+| 宣告方式   | 可見性                | 範例                    |
+| ---------- | --------------------- | ----------------------- |
+| 首字母大寫 | 可匯出（public）      | `Add`, `Pi`, `UserName` |
+| 首字母小寫 | 封包內可用（private） | `add`, `pi`, `userName` |
+
+---
+
+### 範例：可見性差異
+
+```go
+package mathutil
+
+// 公開的函數
+func Add(a, b int) int {
+    return a + b
+}
+
+// 封包內部使用
+func subtract(a, b int) int {
+    return a - b
+}
+```
+
+```go:main.go
+// main.go
+package main
+
+import (
+    "fmt"
+    "project/mathutil"
+)
+
+func main() {
+    fmt.Println(mathutil.Add(10, 5)) // ✅ 可用
+    fmt.Println(mathutil.subtract(10, 5)) // ❌ 編譯錯誤：undefined
+}
+```
+
+---
+
+# `init()` 函數
+
+每個 package 可以定義一個 `init()` 函數，  
+在匯入時會自動執行（在 `main()` 之前）。
+
+```
+package mathutil
+
+import "fmt"
+
+func init() {
+    fmt.Println("mathutil 已載入")
+}
+```
+
+```
+package main
+
+import (
+    "fmt"
+    "project/mathutil"
+)
+
+func main() {
+    fmt.Println("main 開始執行")
+}
+```
+
+輸出結果：
+
+```
+mathutil 已載入
+main 開始執行
+```
+
+> [!NOTE]
+> `init()` 常用於初始化設定、註冊資料或驗證環境。  
+> 每個檔案可有多個 `init()`，執行順序依據檔案匯入順序而定。
+
+---
+
+# 匯入第三方套件
+
+Go 提供強大的套件管理系統 `go mod`。  
+假設我們要使用外部套件 `github.com/google/uuid`：
+
+```
+go mod init myapp
+go get github.com/google/uuid
+```
+
+接著使用：
+
+```
+package main
+
+import (
+    "fmt"
+    "github.com/google/uuid"
+)
+
+func main() {
+    id := uuid.New()
+    fmt.Println("新 UUID:", id)
+}
+```
+
+---
+
+# 匯入別名（import alias）
+
+如果匯入套件名稱太長，可以使用別名：
+
+```
+import m "project/mathutil"
+
+func main() {
+    fmt.Println(m.Add(2, 3))
+}
+```
+
+或使用 `_` 表示只執行 `init()`，不使用內容：
+
+```
+import _ "project/config"
+```
+
+---
+
+# 🧩 小練習：製作你的工具包
+
+建立一個 `stringutil` 封包，提供字串工具：
+
+### stringutil/stringutil.go
+
+```
+package stringutil
+
+import "strings"
+
+func ToUpperFirst(s string) string {
+    if s == "" {
+        return s
+    }
+    return strings.ToUpper(s[:1]) + s[1:]
+}
+```
+
+### main.go
+
+```
+package main
+
+import (
+    "fmt"
+    "project/stringutil"
+)
+
+func main() {
+    fmt.Println(stringutil.ToUpperFirst("hello go"))
+}
+```
+
+執行結果：
+
+```
+Hello go
+```
+
+---
+
+# 結語
+
+這篇我們學會了：
+
+- 如何建立自訂 package
+- 大小寫控制可見性
+- 使用 `init()` 進行初始化
+- 匯入第三方套件與使用別名
+
+在下一篇，我們將探討 **Go 的陣列（array）、切片（slice）與 map**，  
+這是 Go 資料結構的核心之一 🚀

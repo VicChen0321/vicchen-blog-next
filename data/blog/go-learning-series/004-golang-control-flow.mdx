@@ -1,0 +1,255 @@
+---
+title: '[Go 學習系列] 4. 控制流程與函數基礎'
+date: '2025-09-12'
+summary: '學習 Go 的控制流程：if、for、switch 與函數定義，掌握邏輯判斷與基礎程式結構。'
+tags: ['Go', 'Go-Learning']
+---
+
+# 前言
+
+前一篇我們學會了變數、常數與基本型別。  
+接下來要讓程式「會思考」，就要進入 **控制流程（Control Flow）** 與 **函數（Function）** 的世界。
+
+---
+
+# if 條件判斷
+
+Go 的 `if` 語法和其他語言相似，但不需要小括號 `()`，  
+而且大括號 `{}` 是 **強制要寫的**。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    age := 18
+
+    if age >= 18 {
+        fmt.Println("已成年")
+    } else {
+        fmt.Println("未成年")
+    }
+}
+```
+
+---
+
+## if 可搭配「短變數宣告」
+
+`if` 條件區塊中可以先宣告變數，該變數只在 `if` / `else` 範圍內有效：
+
+```go
+if score := 85; score >= 60 {
+    fmt.Println("及格")
+} else {
+    fmt.Println("不及格")
+}
+```
+
+> [!NOTE]
+> `score` 僅在這個 `if` 區塊內可用，出了區塊就會被釋放。  
+> 這是 Go 常見的「小作用域變數」寫法。
+
+---
+
+# for 迴圈
+
+Go 只有一種迴圈關鍵字：`for`，  
+但它能取代 `while`、`do-while` 等多種用法。
+
+## 標準寫法
+
+```go
+for i := 0; i < 5; i++ {
+    fmt.Println(i)
+}
+```
+
+---
+
+## 類似 while 寫法（條件式）
+
+```go
+i := 0
+for i < 5 {
+    fmt.Println(i)
+    i++
+}
+```
+
+---
+
+## 無限迴圈
+
+```go
+for {
+    fmt.Println("loop forever")
+}
+```
+
+> [!TIP]
+> 記得搭配 `break` 或 `return` 結束迴圈，否則會卡死喔！
+
+---
+
+# switch 條件分支
+
+Go 的 `switch` 不需要 `break`，每個 `case` 預設會自動中斷。
+
+```go
+day := "Monday"
+
+switch day {
+case "Monday":
+    fmt.Println("痛苦的開始！")
+case "Friday":
+    fmt.Println("快樂的開始！")
+default:
+    fmt.Println("普通的一天")
+}
+```
+
+---
+
+## 多條件與表達式
+
+```go
+switch hour := 14; {
+case hour < 12:
+    fmt.Println("早上好")
+case hour < 18:
+    fmt.Println("下午好")
+default:
+    fmt.Println("晚上好")
+}
+```
+
+> [!NOTE]
+> `switch true` 的概念：  
+> 當不指定條件時，`switch` 會依序比對每個 `case` 是否為 `true`。
+
+---
+
+# 函數（Function）
+
+函數是程式設計的基礎單位。  
+Go 使用關鍵字 `func` 定義函數。
+
+```go
+package main
+
+import "fmt"
+
+func add(a int, b int) int {
+    return a + b
+}
+
+func main() {
+    result := add(3, 5)
+    fmt.Println("結果:", result)
+}
+```
+
+---
+
+## 多回傳值
+
+Go 支援同時回傳多個值：
+
+```go
+func divide(a, b float64) (float64, bool) {
+    if b == 0 {
+        return 0, false
+    }
+    return a / b, true
+}
+
+func main() {
+    result, ok := divide(10, 2)
+    if ok {
+        fmt.Println("結果:", result)
+    } else {
+        fmt.Println("除數不能為 0")
+    }
+}
+```
+
+---
+
+## 命名回傳值
+
+你可以為回傳值命名，使程式更具可讀性：
+
+```go
+func rectangle(width, height float64) (area float64, perimeter float64) {
+    area = width * height
+    perimeter = 2 * (width + height)
+    return
+}
+```
+
+> [!TIP]
+> 使用命名回傳值時可以直接使用 `return`，Go 會自動回傳當前變數值。
+
+---
+
+# 🧩 小練習：簡易成績判斷系統
+
+綜合這一篇的知識，讓我們寫一個簡單的成績等級判斷程式。
+
+```go
+package main
+
+import "fmt"
+
+func getGrade(score int) string {
+    switch {
+    case score >= 90:
+        return "A"
+    case score >= 80:
+        return "B"
+    case score >= 70:
+        return "C"
+    case score >= 60:
+        return "D"
+    default:
+        return "F"
+    }
+}
+
+func main() {
+    var name string
+    var score int
+
+    fmt.Print("請輸入姓名: ")
+    fmt.Scanln(&name)
+
+    fmt.Print("請輸入成績: ")
+    fmt.Scanln(&score)
+
+    grade := getGrade(score)
+    fmt.Printf("%s 的等級為 %s\n", name, grade)
+}
+```
+
+執行範例：
+
+```go
+請輸入姓名: Vic
+請輸入成績: 85
+Vic 的等級為 B
+```
+
+---
+
+# 結語
+
+這篇我們學會了：
+
+- Go 的基本邏輯控制：`if`、`for`、`switch`
+- 函數定義與回傳值使用
+- 實作一個成績等級判斷小程式
+
+下一篇，我們將進一步探索 **Go 的 Package 與可見性規則**，  
+讓你開始進入「模組化程式設計」的階段！
