@@ -1,0 +1,195 @@
+---
+title: '[Go 學習系列] 7. Slice 與 Map 進階操作與實戰'
+date: '2025-10-03'
+summary: '深入探索 Go 的 Slice 與 Map，包括底層記憶體共用、range 行為、容量擴充與實戰應用技巧。'
+tags: ['Go', 'Go-Learning']
+---
+
+# 前言
+
+上一章我們學會了 Slice 與 Map 的基本操作，  
+但實務上常遇到一些進階情況，例如：
+
+- Slice 底層陣列共用導致修改影響其他 slice
+- Map 在 range 中修改元素要小心
+- Slice append 的容量擴充機制
+
+這篇我們就來深入這些進階議題，並做一些實戰練習。
+
+---
+
+# 一、Slice 底層共用行為
+
+Slice 是對底層陣列的引用，所以多個 slice 可能共用同一底層。
+
+```go
+a := []int{1, 2, 3, 4, 5}
+b := a[1:4] // [2 3 4]
+
+b[0] = 99
+fmt.Println(a) // [1 99 3 4 5]
+fmt.Println(b) // [99 3 4]
+```
+
+> [!NOTE]
+> 修改 slice 的元素會影響原始底層陣列。
+
+---
+
+## 避免底層共用的方法
+
+使用 `copy()` 建立獨立 slice：
+
+```go
+a := []int{1, 2, 3, 4, 5}
+b := make([]int, 3)
+copy(b, a[1:4])
+b[0] = 99
+
+fmt.Println(a) // [1 2 3 4 5]
+fmt.Println(b) // [99 3 4]
+```
+
+---
+
+# 二、Slice append 與容量擴充
+
+Slice 的容量（cap）決定底層陣列大小。當 append 超過容量時，Go 會自動建立新的底層陣列。
+
+```go
+a := make([]int, 2, 3)
+fmt.Println(len(a), cap(a)) // 2 3
+
+a = append(a, 10)
+fmt.Println(len(a), cap(a)) // 3 3
+
+a = append(a, 20)
+fmt.Println(len(a), cap(a)) // 4 6 （容量自動擴充）
+```
+
+> [!TIP]
+> 容量倍增策略可以減少多次 reallocation，提高效能。
+
+---
+
+# 三、Map 迭代與修改
+
+### 1️⃣ range 注意事項
+
+在迭代 Map 時，如果直接修改元素：
+
+```go
+m := map[string]int{"a": 1, "b": 2}
+
+for k, v := range m {
+    m[k] = v * 2
+}
+fmt.Println(m) // OK
+```
+
+> 可以修改值，但不能直接修改 key。Map 本身是無序的，每次迭代順序可能不同。
+
+---
+
+### 2️⃣ 刪除元素
+
+在迴圈中刪除元素是安全的：
+
+```go
+for k := range m {
+    if k == "a" {
+        delete(m, k)
+    }
+}
+fmt.Println(m)
+```
+
+---
+
+# 四、Slice 與 Map 實戰範例
+
+## 1️⃣ 去重（slice 去除重複元素）
+
+```go
+func unique(nums []int) []int {
+    seen := make(map[int]bool)
+    result := []int{}
+
+    for _, n := range nums {
+        if !seen[n] {
+            result = append(result, n)
+            seen[n] = true
+        }
+    }
+
+    return result
+}
+
+func main() {
+    nums := []int{1, 2, 2, 3, 3, 4}
+    fmt.Println(unique(nums)) // [1 2 3 4]
+}
+```
+
+---
+
+## 2️⃣ 統計字串出現頻率
+
+```go
+func countWords(words []string) map[string]int {
+    counter := make(map[string]int)
+    for _, w := range words {
+        counter[w]++
+    }
+    return counter
+}
+
+func main() {
+    fruits := []string{"apple", "banana", "apple", "orange", "banana"}
+    fmt.Println(countWords(fruits))
+}
+```
+
+---
+
+## 3️⃣ 篩選 Slice
+
+```go
+func filterEven(nums []int) []int {
+    result := []int{}
+    for _, n := range nums {
+        if n%2 == 0 {
+            result = append(result, n)
+        }
+    }
+    return result
+}
+
+func main() {
+    nums := []int{1, 2, 3, 4, 5, 6}
+    fmt.Println(filterEven(nums)) // [2 4 6]
+}
+```
+
+---
+
+# 五、效能與注意事項
+
+- Slice append 時盡量預估容量，避免頻繁擴充
+- Map 迭代順序不固定，若有順序需求需額外排序
+- 多 goroutine 修改 map 或 slice 必須加鎖 (`sync.Mutex`)
+- 避免直接共享 slice 引用造成意外修改
+
+---
+
+# 結語
+
+這篇我們掌握了：
+
+- Slice 的底層共用與 copy 技巧
+- Slice append 與容量擴充策略
+- Map 的迭代、修改與刪除
+- 實戰範例：去重、統計、篩選
+
+下一篇，我們將進入 **Golang 並行程式設計入門：Goroutine**，  
+正式開始探索 Go 的高效能並行能力 🚀

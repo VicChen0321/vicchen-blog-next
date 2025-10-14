@@ -1,0 +1,232 @@
+---
+title: '[Go 學習系列] 6. 陣列、切片與 Map：Go 的資料結構基礎'
+date: '2025-09-26'
+summary: '深入理解 Go 的 Array、Slice 與 Map，學習如何使用、擴充與避免常見陷阱。'
+tags: ['Go', 'Go-Learning']
+---
+
+# 前言
+
+Go 的三大核心資料結構是：
+
+1. **Array（陣列）**：固定長度，靜態配置
+2. **Slice（切片）**：動態長度，使用最廣
+3. **Map（映射）**：Key-Value pair collection，類似其他語言的 HashMap
+
+---
+
+# 一、Array（陣列）
+
+陣列是固定長度、同型別元素的集合。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    var nums [3]int
+    nums[0] = 10
+    nums[1] = 20
+    nums[2] = 30
+
+    fmt.Println(nums)      // [10 20 30]
+    fmt.Println(nums[1])   // 20
+    fmt.Println(len(nums)) // 3
+}
+```
+
+## 宣告方式
+
+```go
+// 靜態宣告
+var a [3]string = [3]string{"Go", "Rust", "Java"}
+
+// 型別推斷
+b := [3]int{1, 2, 3}
+
+// 自動推斷長度（...）
+c := [...]int{10, 20, 30, 40}
+```
+
+> [!NOTE]
+> 陣列的長度是 **型別的一部分**，`[3]int` 和 `[4]int` 是不同型別。
+
+---
+
+# 二、Slice（切片）
+
+Slice 是 Go 的「彈性陣列」，是最常用的集合類型。  
+底層仍是陣列，但可動態擴充。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    nums := []int{1, 2, 3}
+    nums = append(nums, 4, 5)
+
+    fmt.Println(nums)      // [1 2 3 4 5]
+    fmt.Println(len(nums)) // 5
+    fmt.Println(cap(nums)) // 容量，視底層陣列而定
+}
+```
+
+## 使用 `make` 建立 Slice
+
+```go
+s := make([]int, 3, 5) // 長度 3，容量 5
+fmt.Println(s)          // [0 0 0]
+```
+
+---
+
+## Slice 擷取與複製
+
+```go
+nums := []int{10, 20, 30, 40, 50}
+
+sub := nums[1:4] // [20 30 40]
+fmt.Println(sub)
+
+copyTarget := make([]int, len(sub))
+copy(copyTarget, sub)
+fmt.Println(copyTarget) // [20 30 40]
+```
+
+> [!TIP]
+> 使用 `copy()` 可以安全複製 slice，而不是直接引用同一底層陣列。
+
+---
+
+## Slice 是參照型別
+
+```go
+a := []int{1, 2, 3}
+b := a
+b[0] = 99
+
+fmt.Println(a) // [99 2 3]
+fmt.Println(b) // [99 2 3]
+```
+
+> [!WARNING]
+> 直接賦值會共用底層資料。  
+> 若要複製內容，請使用 `copy()`。
+
+---
+
+# 三、Map（鍵值對）
+
+Map 是 Go 內建的 Hash 結構，用於儲存 key-value。
+
+```go
+m := make(map[string]int)
+m["apple"] = 5
+m["banana"] = 10
+
+fmt.Println(m["apple"]) // 5
+fmt.Println(len(m))     // 2
+```
+
+## 判斷 key 是否存在
+
+```go
+val, ok := m["orange"]
+if !ok {
+    fmt.Println("orange 不存在")
+}
+```
+
+> [!NOTE]
+> 若 key 不存在，Go 會回傳該型別的零值（例如 int 為 0）。
+
+---
+
+## 使用 range 迭代 Map
+
+```go
+for k, v := range m {
+    fmt.Printf("%s -> %d\n", k, v)
+}
+```
+
+---
+
+## 刪除項目
+
+```go
+delete(m, "banana")
+fmt.Println(m)
+```
+
+---
+
+# 四、綜合練習：統計水果數量
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    fruits := []string{"apple", "banana", "apple", "orange", "banana", "apple"}
+
+    countMap := make(map[string]int)
+
+    for _, f := range fruits {
+        countMap[f]++
+    }
+
+    for k, v := range countMap {
+        fmt.Printf("%s -> %d\n", k, v)
+    }
+}
+```
+
+執行結果：
+
+```
+apple -> 3
+banana -> 2
+orange -> 1
+```
+
+---
+
+# 五、常見陷阱與注意事項
+
+### 1️⃣ Slice append 會導致底層陣列重新分配
+
+```go
+a := []int{1, 2}
+b := a
+b = append(b, 3)
+
+fmt.Println(a) // [1 2]
+fmt.Println(b) // [1 2 3]
+```
+
+> `append()` 可能會建立新的底層陣列，舊的 slice 不受影響。
+
+---
+
+### 2️⃣ Map 是非執行緒安全的
+
+> 多 goroutine 同時修改 map 會發生競爭（race condition）。  
+> 若要並行使用，請搭配 `sync.Mutex` 或 `sync.Map`。
+
+---
+
+# 結語
+
+這篇我們學會了：
+
+- 陣列的宣告與長度限制
+- 切片的動態特性與底層行為
+- Map 的鍵值操作與安全性考量
+
+在下一篇，我們將深入探討 **Slice 與 Map 的進階操作**，  
+包括容量擴充策略、底層記憶體共用、`range` 行為與效能優化 🔍
