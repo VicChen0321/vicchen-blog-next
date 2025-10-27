@@ -1,0 +1,247 @@
+---
+title: '[系統設計筆記] 分散式交易一致性：SAGA Pattern'
+date: '2025-10-22'
+tags: ['System Design']
+draft: false
+summary: '介紹 SAGA Pattern 的核心概念、Choreography 與 Orchestration 模式差異、補償交易設計與實作考量，並以「訂單 / 付款 / 庫存」範例說明如何在微服務中實現最終一致性。'
+---
+
+---
+
+## 前言
+
+在微服務架構下，跨服務的交易操作是常見難題。
+
+假設有這樣一個流程：
+
+- `Order Service` 建立訂單
+- `Payment Service` 扣款
+- `Inventory Service` 扣庫存
+
+看似簡單，但當第三步失敗時，你要怎麼 rollback 前面兩個服務的操作？
+
+在單體式架構中，我們可以靠 **資料庫交易（ACID）** 保證一致性。
+但微服務架構下，各自擁有獨立資料庫，跨服務的分散式交易中，「全域交易」幾乎不可行。
+這時候就需要 **SAGA Pattern**。
+
+---
+
+## SAGA Pattern 是什麼？
+
+**SAGA Pattern** 是一種用來維持「最終一致性（Eventual Consistency）」的設計模式。
+它將一個長交易（Long-running Transaction）拆解成一系列 **可補償（Compensable）** 的本地交易。
+
+> [!NOTE]
+> 每個服務完成自己的本地交易後，若整個流程中途失敗，
+> 系統會執行「補償動作（Compensation Transaction）」去抵銷已完成的操作。
+
+---
+
+## 基本概念
+
+假設一筆「建立訂單」流程如下：
+
+1. 建立訂單（Order Service）
+2. 扣款（Payment Service）
+3. 扣庫存（Inventory Service）
+
+如果庫存不足（步驟 3 失敗），則要：
+
+- 退回款項（Payment Service）
+- 取消訂單（Order Service）
+
+用 Mermaid 示意圖表示：
+
+<Mermaid chart={`
+sequenceDiagram
+participant Order
+participant Payment
+participant Inventory
+
+Order->>Payment: 扣款
+Payment->>Inventory: 扣庫存
+Inventory-->>Payment: 失敗(庫存不足)
+Payment-->>Order: 補償(退費)
+Order-->>Order: 補償(取消訂單)
+
+`}/>
+
+---
+
+## 兩種主要模式
+
+| 模式              | 機制                                     | 優點                   | 缺點                         | 適用場景                 |
+| ----------------- | ---------------------------------------- | ---------------------- | ---------------------------- | ------------------------ |
+| **Choreography**  | 每個服務透過事件觸發下一步               | 去中心化、簡單易擴充   | 事件流程難追蹤、錯誤補償複雜 | 流程簡單、服務間低耦合   |
+| **Orchestration** | 有一個編排器（Orchestrator）負責指揮流程 | 控制集中、補償邏輯清晰 | Orchestrator 複雜、耦合高    | 流程多步驟、需要明確控制 |
+
+---
+
+### Choreography 模式
+
+在 **Choreography** 中，沒有中央控制器。
+每個服務透過事件彼此協作。
+
+例如：
+
+- `Order Service` 發出事件：`OrderCreated`
+- `Payment Service` 收到事件 → 扣款成功後發出 `PaymentCompleted`
+- `Inventory Service` 收到事件 → 扣庫存失敗 → 發出 `InventoryFailed`
+- 其他服務（例如 `Order Service`）根據事件決定補償動作
+
+<Mermaid
+  chart={`graph TD
+    A[Order Service] -->|OrderCreated| B[Payment Service]
+    B -->|PaymentCompleted| C[Inventory Service]
+    C -->|InventoryFailed| A`}
+/>
+
+這種方式的優點是各服務低耦合、自然地隨事件擴展。
+但缺點是流程難以觀察與追蹤（需強化事件追蹤與觀測性）。
+
+---
+
+### Orchestration 模式
+
+在 **Orchestration** 模式中，會有一個中央協調器（Saga Orchestrator）。
+它負責控制交易流程，並在發生錯誤時呼叫補償邏輯。
+
+<Mermaid chart={`
+sequenceDiagram
+participant SagaOrchestrator
+participant Order
+participant Payment
+participant Inventory
+
+SagaOrchestrator->>Order: 建立訂單
+Order-->>SagaOrchestrator: OK
+SagaOrchestrator->>Payment: 扣款
+Payment-->>SagaOrchestrator: OK
+SagaOrchestrator->>Inventory: 扣庫存
+Inventory-->>SagaOrchestrator: FAIL
+SagaOrchestrator->>Payment: 補償(退費)
+SagaOrchestrator->>Order: 補償(取消訂單)
+
+`}/>
+
+這樣的設計讓補償邏輯集中，易於測試與觀察。可以參考使用：Temporal 框架實作
+
+---
+
+## 實務設計考量
+
+### 1. 補償交易（Compensation）
+
+- 每個子交易都必須能「反向操作」
+- 例如：
+  - 建立訂單 → 取消訂單
+  - 扣款 → 退費
+  - 扣庫存 → 回補
+
+### 2. 冪等性（Idempotency）
+
+- 補償動作可能被重試多次
+- 每個服務的 API 都應保證重複呼叫不會導致資料異常
+
+### 3. 狀態追蹤（Saga Log）
+
+- Orchestrator 通常會維護每步執行狀態與補償記錄
+- 常見實作：Outbox Pattern、事件儲存（Event Store）
+
+### 4. 可觀測性（Observability）
+
+- 分散式追蹤（例如 OpenTelemetry）
+- 統一的 log correlation（可透過 MDC / TraceId）
+
+### 5. 失敗重試與一致性
+
+- 設計時需明確定義「何時重試」與「何時補償」
+- Saga 最終達成一致性，而非即時一致性
+
+---
+
+## Java / Spring Boot 實作思路（示意）
+
+```java
+public interface SagaStep {
+    void execute();
+    void compensate();
+}
+
+@Service
+public class OrderSaga implements SagaStep {
+    @Override
+    public void execute() {
+        // 建立訂單
+    }
+    @Override
+    public void compensate() {
+        // 取消訂單
+    }
+}
+```
+
+再由 Orchestrator 控制流程：
+
+```java
+@Service
+public class SagaOrchestrator {
+
+    @Autowired List<SagaStep> steps;
+
+    public void runSaga() {
+        List<SagaStep> completed = new ArrayList<>();
+        try {
+            for (SagaStep step : steps) {
+                step.execute();
+                completed.add(step);
+            }
+        } catch (Exception ex) {
+            // 補償已完成的步驟
+            Collections.reverse(completed);
+            completed.forEach(SagaStep::compensate);
+        }
+    }
+}
+```
+
+> [!NOTE]
+> 這是一個極簡化版示例。實務中會搭配持久化的 Saga Log、事件重試機制、以及 MQ 去異步處理（如 Kafka、RabbitMQ）。
+
+---
+
+## SAGA Pattern 的優缺點
+
+| 面向         | 優點                             | 缺點                     |
+| ------------ | -------------------------------- | ------------------------ |
+| **一致性**   | 能在分散式環境維持「最終一致性」 | 非即時一致性，需容忍延遲 |
+| **可用性**   | 不需全域鎖，提高整體可用性       | 補償機制複雜、需小心設計 |
+| **擴充性**   | 可自然延伸流程步驟               | Choreography 模式難維護  |
+| **可觀測性** | 可藉由集中協調器控管流程         | 事件鏈長時除錯困難       |
+
+---
+
+## 總結
+
+**SAGA Pattern** 是微服務環境中維持交易一致性的關鍵模式。
+它的核心理念是：
+
+> 允許失敗，但要能補償。
+
+重點整理：
+
+1. SAGA 是分散式交易的替代方案，用於達成 **最終一致性**。
+2. 分為兩種模式：
+   - Choreography（服務間事件驅動）
+   - Orchestration（協調者集中協調）
+
+3. 實作時需考慮補償交易、冪等性、重試機制與觀測性。
+4. Spring 生態中可搭配 Outbox Pattern、Message Broker 或 Workflow Engine。
+
+---
+
+## 延伸閱讀
+
+- [Microservices.io: Saga Pattern](https://microservices.io/patterns/data/saga.html)
+- [Outbox Pattern — Reliable Messaging](https://microservices.io/patterns/data/transactional-outbox.html)
+- [Temporal.io Documentation](https://docs.temporal.io/)

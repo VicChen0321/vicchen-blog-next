@@ -13,34 +13,42 @@ const Mermaid = ({ chart, className = '' }: MermaidProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const { theme } = useTheme()
 
-  const lightTheme = {
-    background: '#fafafa',
-    primaryColor: '#5b6dfa',
-    primaryBorderColor: '#4a56d3',
-    primaryTextColor: '#1e1e1e',
-    lineColor: '#d0d0d0',
-    secondaryColor: '#f2f2f2',
-    tertiaryColor: '#e8e8e8',
-  }
-
-  const darkTheme = {
-    background: '#111827',
-    primaryColor: '#7a8dfd',
-    primaryBorderColor: '#8ea2ff',
-    primaryTextColor: '#f5f5f5',
-    lineColor: '#4b5563',
-    secondaryColor: '#1f2937',
-    tertiaryColor: '#374151',
-  }
-
   useEffect(() => {
+    const lightTheme = {
+      background: '#ffffff',
+      primaryColor: '#fff4dd',
+      primaryTextColor: '#222222',
+      primaryBorderColor: '#ffe0b2',
+      lineColor: '#a0a0a0',
+      secondaryColor: '#e0edfa',
+      tertiaryColor: '#f5f5f5',
+      noteBkgColor: '#fff5ad',
+      noteTextColor: '#333',
+      noteBorderColor: '#ffe066',
+    }
+
+    const darkTheme = {
+      background: '#1e1e1e',
+      primaryColor: '#22223b',
+      primaryTextColor: '#ececec',
+      primaryBorderColor: '#575c7c',
+      lineColor: '#44475a',
+      secondaryColor: '#393e54',
+      tertiaryColor: '#2a2d43',
+      noteBkgColor: '#393e54',
+      noteTextColor: '#ececec',
+      noteBorderColor: '#575c7c',
+    }
+
     const isDark = theme === 'dark'
+    const themeVars = isDark ? darkTheme : lightTheme
 
     mermaid.initialize({
       startOnLoad: false,
       theme: 'base',
-      themeVariables: isDark ? darkTheme : lightTheme,
+      themeVariables: themeVars,
     })
+    mermaid.contentLoaded()
   }, [theme]) // 只在 component mount 時執行
 
   useEffect(() => {
