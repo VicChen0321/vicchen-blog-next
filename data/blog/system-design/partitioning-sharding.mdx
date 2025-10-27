@@ -1,0 +1,172 @@
+---
+title: '[系統設計筆記] Partitioning vs Sharding：資料庫拆分策略'
+date: '2025-10-27'
+tags: ['System Design', 'Database']
+draft: false
+summary: '整理 SQL 系統設計中 Partitioning 與 Sharding 的差異、適用場景、優缺點與常見策略，從單庫優化到水平擴展的演進路徑。'
+---
+
+## 前言
+
+在系統設計面試中，常會被問到：
+
+> 「如果單一資料庫的資料量太大，你會怎麼拆？」
+
+這時候，兩個關鍵詞一定會出現：
+
+- **Partitioning（資料分區）**
+- **Sharding（資料分片）**
+
+兩者聽起來很像，也常常被搞混使用，但這兩者的目的與複雜度差距極大。
+這篇筆記整理它們的核心差異、優缺點與設計策略，幫助你在系統設計時選對方案。
+
+---
+
+## Partitioning：單庫內的分區策略
+
+**Partitioning** 是在同一個資料庫中，依照規則（例如時間、ID 範圍）將資料拆成多個「區塊（Partition）」儲存。
+對應用層來說仍是一張表，只是物理上分成多個段。
+
+### 🧠 目標
+
+- 優化查詢效能（透過 partition pruning）
+- 簡化歸檔與刪除操作
+- 控制單一資料檔案的大小
+
+<Mermaid
+  chart={`graph TD
+  A[Single Database] --> B1[Partition 2025_08]
+  A --> B2[Partition 2025_09]
+  A --> B3[Partition 2025_10]`}
+/>
+
+### ✅ 優點
+
+- 查詢只掃必要分區，效能更高。
+- 快速刪除或歸檔舊資料。
+- 對應用層透明，不需改 SQL。
+- 適合 append-only 資料（如 log、交易紀錄）。
+
+### ❌ 缺點
+
+- 若查詢未命中分區 key，反而掃全部分區。
+- 分區過多會拖慢 optimizer。
+- 更換分區 key 需重建表。
+- 無法真正分散 I/O，仍是單機瓶頸。
+
+### 🧩 適用場景
+
+- 發票、交易、訂單等時間序資料。
+- 每月批次歸檔、清理歷史資料。
+
+---
+
+## Sharding：跨庫的水平擴展
+
+**Sharding** 是將資料「切到多個獨立資料庫節點」，每個節點擁有相同 schema，不同資料範圍。
+應用層需透過 routing 邏輯決定要打哪個 shard。
+
+### 🧠 目標
+
+- 解除單庫瓶頸
+- 分散讀寫流量
+- 提高整體可用性與擴展性
+
+<Mermaid
+  chart={`graph LR
+  App[應用層] --> Router[Sharding Router]
+  Router --> DB0[DB_0: user_id % 16 = 0]
+  Router --> DB1[DB_1: user_id % 16 = 1]
+  Router --> DB2[DB_2: user_id % 16 = 2]
+  Router --> DBN[DB_15: user_id % 16 = 15]`}
+/>
+
+### ✅ 優點
+
+- 可水平擴展，理論上無上限。
+- 每個 shard 壓力分散，效能明顯提升。
+- 部分失效不影響全系統。
+
+### ❌ 缺點
+
+- 跨 shard 查詢成本高（需聚合層）。
+- Schema、migration、備份複雜。
+- 應用層需理解 routing 規則。
+- 增刪節點需要資料重分佈。
+  > [!TIP]
+  > 這部分可以搭配一致性哈希方式去改善
+
+### ⚙️ 常見策略
+
+| 類型                | 範例                     | 優點         | 缺點           |
+| ------------------- | ------------------------ | ------------ | -------------- |
+| Range Sharding      | user_id 1–1000 在 shard1 | 容易理解     | 資料傾斜       |
+| Hash Sharding       | hash(user_id) % N        | 均勻分佈     | 難支援範圍查詢 |
+| Business Sharding   | 依 partner_id、country   | 業務隔離清晰 | 不均衡、難聚合 |
+| Time-based Sharding | 每月新庫                 | 易控資料量   | 跨時間查詢複雜 |
+
+---
+
+## Partitioning vs Sharding 差異總覽
+
+| 面向       | Partitioning        | Sharding                  |
+| ---------- | ------------------- | ------------------------- |
+| 層級       | 單庫內              | 多庫之間                  |
+| 管理單位   | Partition（分區）   | Shard（資料庫節點）       |
+| 目標       | 優化維運與查詢      | 水平擴展與負載分散        |
+| 實作複雜度 | 低（DB 原生支援）   | 高（需 routing 與聚合層） |
+| 對應用層   | 透明                | 需 aware 或中介層代理     |
+| 常見應用   | 時序資料、Log、發票 | 大規模交易系統、會員系統  |
+| 容錯性     | 單庫故障即停        | 可部分容錯                |
+| 典型規模   | 10^7 ~ 10^9 筆      | 10^9 以上                 |
+
+---
+
+## 實務演進路徑建議
+
+<Mermaid
+  chart={`
+  graph LR
+  A["單庫 + Index (優化)"] --> B["Partitioning (分區)"]
+  B --> C["Read/Write 分離"]
+  C --> D["Sharding (分片)"]`}
+/>
+
+> 建議循序演進，不要過早 Sharding。
+> Partitioning 是輕量、風險小的第一步。
+
+---
+
+## 🚀 延伸閱讀：Sharding 在真實世界的實作
+
+- [Apache ShardingSphere 官方文件](https://shardingsphere.apache.org/)
+
+### 🧩 MySQL Vitess
+
+- Google YouTube 最早的 sharding 解決方案之一。
+- 將多個 MySQL 實例抽象成一個虛擬邏輯庫（virtual keyspace）。
+- 內建分片、重分佈、查詢聚合與 failover 能力。
+- 常見於大規模 SaaS（如 Slack、GitHub）。
+
+* [MySQL Partitioning 官方文件](https://dev.mysql.com/doc/refman/8.0/en/partitioning.html)
+* [Vitess Architecture Overview](https://vitess.io/docs/overview/)
+
+### 🧩 PostgreSQL Citus
+
+- 將 PostgreSQL 轉為分散式資料庫。
+- 支援分佈式 join、aggregation、real-time analytics。
+- 適合多租戶（multi-tenant）與 event log 類型系統。
+
+* [Citus 官方文件](https://www.citusdata.com/)
+
+---
+
+## 總結
+
+**Partitioning** 解決「單庫太大不好維運」。
+**Sharding** 解決「單庫撐不住」。
+
+選擇時可以這樣思考：
+
+- 想要「**更快查、好維護**」→ Partitioning
+- 想要「**能撐更多量、不中斷服務**」→ Sharding
