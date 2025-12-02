@@ -1,0 +1,175 @@
+---
+title: '[Spring 筆記] HikariCP 連線池設定整理'
+date: '2025-11-07'
+tags: ['Spring', 'HikariCP']
+draft: false
+summary: '整理 Spring Boot 預設 HikariCP 連線池的完整配置，從基本連線數量到進階性能與健康檢查設定，並附 YAML 範例，方便快速上手與調校。'
+---
+
+## 前言
+
+在 Spring Boot 專案中，資料庫連線池是後端性能的關鍵。
+Spring Boot 預設使用 **HikariCP** 作為連線池，它輕量、高效、低延遲，是官方推薦方案。
+
+本文整理 **HikariCP 的完整配置選項**，從基本連線數量到進階性能與健康檢查，並附 Spring Boot `application.yml` 範例，方便快速上手。
+
+---
+
+## 1️⃣ 連線池大小與閒置設定
+
+這些屬性決定了連線池的容量與閒置策略：
+
+| 屬性                | 預設值                  | 說明                                                                         |
+| ------------------- | ----------------------- | ---------------------------------------------------------------------------- |
+| `maximumPoolSize`   | 10                      | 連線池最大連線數                                                             |
+| `minimumIdle`       | same as maximumPoolSize | 最小閒置連線數                                                               |
+| `connectionTimeout` | 30000 ms (30 s)         | 取得連線的最大等待時間，超時會丟出 SQLException                              |
+| `idleTimeout`       | 600000 ms (10 min)      | 閒置連線多久會被回收，0 = 不回收，最小允許 10000ms (10s)                     |
+| `keepaliveTime`     | 120000ms(2 min)         | 定期喚醒閒置連線以防止被 DB 關閉，建議設定至少分鐘級，且必須 < `maxLifetime` |
+| `maxLifetime`       | 1800000 ms (30 min)     | 連線最大存活時間，超過會重建，0 = 無限生命週期，最小值 30000ms (30 s)        |
+
+> [!TIP]
+>
+> - `maximumPoolSize` 請根據應用併發與資料庫可承受能力調整，避免資源耗盡。
+> - `maxLifetime` 建議比資料庫端連線 timeout **短 30 秒～1 分鐘**，以防 DB 主動關閉連線。
+> - `keepaliveTime` 適合防止雲端資料庫（如 AWS RDS）閒置自動斷線。
+
+---
+
+## 2️⃣ 連線驗證與健康檢查
+
+保證池中連線的可用性與穩定性：
+
+| 屬性                     | 預設值  | 說明                                        |
+| ------------------------ | ------- | ------------------------------------------- |
+| `validationTimeout`      | 5000 ms | 驗證連線是否存活的最大等待時間              |
+| `connectionTestQuery`    | null    | 自訂驗證 SQL，通常 HikariCP 自動判斷 driver |
+| `leakDetectionThreshold` | 0       | 連線洩漏檢測閾值（毫秒），0 = 關閉          |
+
+---
+
+## 3️⃣ DataSource 與 Driver 設定
+
+| 屬性                  | 說明                                                                 |
+| --------------------- | -------------------------------------------------------------------- |
+| `dataSourceClassName` | 完整的 DataSource class，例如 `org.postgresql.ds.PGSimpleDataSource` |
+| `dataSource.url`      | JDBC URL，例如 `jdbc:postgresql://localhost:5432/mydb`               |
+| `dataSource.user`     | 資料庫使用者名稱                                                     |
+| `dataSource.password` | 資料庫密碼                                                           |
+| `driverClassName`     | JDBC driver class，通常 Spring Boot 自動判斷                         |
+
+---
+
+## 4️⃣ 連線屬性（可選）
+
+控制每個連線的特性：
+
+| 屬性                     | 說明                             |
+| ------------------------ | -------------------------------- |
+| `autoCommit`             | 是否自動提交（預設 true）        |
+| `readOnly`               | 是否唯讀連線                     |
+| `catalog`                | 設定連線 catalog                 |
+| `schema`                 | 設定連線 schema                  |
+| `poolName`               | 連線池名稱（方便識別與監控）     |
+| `allowPoolSuspension`    | 是否允許暫停連線池（預設 false） |
+| `isolateInternalQueries` | 是否隔離內部查詢（預設 false）   |
+| `registerMbeans`         | 是否註冊 JMX MBean（預設 false） |
+
+---
+
+## 5️⃣ 進階性能與監控
+
+| 屬性                        | 說明                                                  |
+| --------------------------- | ----------------------------------------------------- |
+| `initializationFailTimeout` | 初始化失敗多久後拋例外，0 = 永不拋出，-1 = 無限等待   |
+| `metricsTrackerFactory`     | 自訂 metrics tracker，用於監控性能                    |
+| `scheduler`                 | 自訂排程器（HikariCP 預設使用內部 ScheduledExecutor） |
+| `threadFactory`             | 自訂執行緒工廠，用於連線池任務執行                    |
+
+---
+
+## 6️⃣ 如何推算合適的 Pool Size？
+
+> 參考：[HikariCP 官方文件：About Pool Sizing](https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing)
+
+`maximumPoolSize` 是效能調校的關鍵參數。  
+太小會導致請求等待連線，太大會讓資料庫負載過高。
+
+### 官方建議公式
+
+`connections = ((core_count * 2) + effective_spindle_count)`
+
+- **core_count**：應用伺服器 CPU 核心數
+- **effective_spindle_count**：資料庫的 I/O 通道數  
+  （SSD 通常視為 1，傳統磁碟可視為磁碟數量）
+
+### 簡化估算法
+
+`maximumPoolSize ≈ (同時查詢數 × 查詢平均耗時) / 期望響應時間`
+
+例：
+
+- 同時最多 50 個請求
+- 平均查詢耗時 100ms
+- 期望響應時間 1 秒  
+  → 50 × 0.1 / 1 = **5**，可從 5~10 起調。
+
+### 實務建議值
+
+| 應用場景            | CPU 核心 | 建議 pool size  |
+| ------------------- | -------- | --------------- |
+| 開發環境            | 4 cores  | 5~10            |
+| 中小型 API 服務     | 8 cores  | 15~25           |
+| 高併發系統          | 16 cores | 30~50           |
+| 批次任務 (多執行緒) | 8 cores  | 每執行緒 1~2 條 |
+
+### 調校步驟建議
+
+1. 從小開始（如 10 條）
+2. 觀察監控（active 連線是否長期接近上限）
+3. 根據壓測結果逐步調整
+4. 注意整體併發：`(實例數 × pool size) ≤ 資料庫允許連線總數`
+
+---
+
+## 7️⃣ Spring Boot `application.yml` 範例
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mydb
+    username: app_user
+    password: secret
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: HikariDemoPool
+      maximum-pool-size: 15
+      minimum-idle: 5
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      validation-timeout: 5000
+      leak-detection-threshold: 2000
+      auto-commit: true
+      read-only: false
+      register-mbeans: true
+```
+
+---
+
+## 小結
+
+- Spring Boot 預設 **HikariCP**，效能高、輕量且整合度好。
+- 常用配置主要是 **連線池大小、閒置策略、逾時與健康檢查**。
+- 進階配置可用於 **洩漏偵測、監控、連線屬性調校**，適合高流量或多資料庫專案。
+
+> [!TIP]
+> 建議：啟動初期先用預設值，測試後再依應用負載調整 `maximumPoolSize`、`idleTimeout`、`leakDetectionThreshold` 等參數，避免過度配置或資源浪費。
+
+---
+
+## 延伸閱讀
+
+- [HikariCP 官方文件](https://github.com/brettwooldridge/HikariCP)
+- [Spring Boot DataSource 配置指南](https://docs.spring.io/spring-boot/docs/current/reference/html/data-sql.html#data-source)
+- [高效能連線池比較：HikariCP vs Tomcat vs DBCP2](https://www.baeldung.com/hikaricp)

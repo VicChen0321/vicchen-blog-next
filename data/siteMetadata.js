@@ -7,7 +7,7 @@ const siteMetadata = {
   language: 'zh-TW',
   locale: 'en-US', // For date time using
   theme: 'system', // system, dark or light
-  siteUrl: 'https://vicchen.dev/',
+  siteUrl: 'https://vicchen.dev',
   siteRepo: 'https://github.com/VicChen0321/vicchen-blog-next',
   siteLogo: `${process.env.BASE_PATH || ''}/static/images/logo.png`,
   socialBanner: `${process.env.BASE_PATH || ''}/static/images/twitter-card.png`,
