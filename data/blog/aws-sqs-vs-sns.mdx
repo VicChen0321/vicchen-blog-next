@@ -1,0 +1,93 @@
+---
+title: 'AWS SNS vs SQS：到底差在哪裡？'
+date: '2025-09-24'
+tags: ['AWS', 'SNS', 'SQS', 'Message Queue', 'Event Driven']
+draft: false
+summary: 'SNS 與 SQS 常被混淆，這篇整理它們的差異、使用情境與搭配方式，幫助你快速理解。'
+---
+
+## AWS SNS vs SQS：到底差在哪裡？
+
+很多剛接觸 AWS 的人，常常會搞混 **SNS (Simple Notification Service)** 和 **SQS (Simple Queue Service)**。名字都很像，甚至常常搭配一起用，但它們的定位和使用情境其實有很大的差別。這篇文章就來整理一下 SNS 與 SQS 的核心概念與實際應用場景。
+
+---
+
+## 1. 基本定位
+
+### SNS (Simple Notification Service)
+
+一個 **Pub/Sub 訊息推播系統**。當某個事件發生時，SNS 可以同時把訊息推送給多個訂閱者（Subscriber），這些訂閱者可以是：
+
+- Email
+- SMS
+- Lambda
+- HTTP/HTTPS Endpoint
+- 甚至 SQS
+
+### SQS (Simple Queue Service)
+
+一個 **Message Queue**。訊息會先被放到 Queue 裡，消費者 (Consumer) 主動去拉取 (poll) 訊息來處理。它保證訊息不會消失，直到被處理完成（或超過保留時間）。
+
+---
+
+## 2. 傳遞方式比較
+
+| 特性     | SNS             | SQS                           |
+| -------- | --------------- | ----------------------------- |
+| 模式     | Pub/Sub (推播)  | Queue (拉取)                  |
+| 傳遞對象 | 多個 Subscriber | 一個 Queue，通常單一 Consumer |
+| 訊息處理 | 即時通知        | 可延遲、排隊處理              |
+| 耦合性   | 高（直接通知）  | 低（非同步處理）              |
+
+---
+
+## 3. 使用情境
+
+### SNS 適合的情境
+
+- 多個系統需要同時知道某個事件  
+  例如：使用者上傳檔案 → 同時寄通知信、觸發 Lambda 產生縮圖、觸發另一個系統寫 Log。
+- 即時推送  
+  例如：寄送簡訊、Email、App 推播。
+
+### SQS 適合的情境
+
+- 後端服務需要平滑處理流量  
+  例如：網站有大量訂單進來，把訂單放到 Queue → Worker 一個一個拉出來處理，避免流量尖峰造成系統崩潰。
+- 保證訊息一定被處理  
+  即使消費者掛掉，訊息也會保留在 Queue 裡，直到重新處理。
+
+---
+
+## 4. SNS + SQS 搭配
+
+實務上很多時候會把 SNS 跟 SQS 一起用：
+
+<Mermaid
+  chart={`
+flowchart TD
+    A[Event Triggered] --> B[SNS Topic]
+    B --> C1[Email Subscriber]
+    B --> C2[Lambda Function]
+    B --> C3[SQS Queue]
+    C3 --> D[Worker / Consumer Processing Messages]
+`}
+/>
+
+這樣做的好處是：
+
+- 系統之間不直接耦合
+- 保證訊息可靠性（SQS 保留機制）
+- 可以同時支援多種處理流程
+
+---
+
+## 5. 總結
+
+- SNS = 廣播通知系統
+- SQS = 安全可靠的排隊系統
+- SNS + SQS = 可擴充的事件驅動架構
+
+> 總結來說
+> SNS 負責「告訴大家」
+> SQS 負責「確保有人真的處理」。
