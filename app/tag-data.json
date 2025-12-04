@@ -16,16 +16,16 @@
   "dynamic-programming": 1,
   "data-structure": 1,
   "design-pattern": 1,
+  "go": 7,
+  "go-learning": 7,
   "kubernetes": 2,
   "devops": 2,
   "cloud": 2,
-  "go": 7,
-  "go-learning": 7,
+  "life": 1,
+  "movie": 1,
   "python": 10,
   "system-design": 4,
   "database": 1,
   "thymeleaf": 2,
-  "spring-boot": 2,
-  "life": 1,
-  "movie": 1
+  "spring-boot": 2
 }
